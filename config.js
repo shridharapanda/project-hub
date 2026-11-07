@@ -22,3 +22,59 @@ window.PROJECTHUB_CONFIG = {
     API_HACKATHONS: `${BACKEND_URL}/api/hackathons`,
     API_MESSAGES: `${BACKEND_URL}/api/messages`
 };
+
+
+// =====================================================
+// THEME MANAGER (DARK / LIGHT MODE)
+// =====================================================
+(function () {
+    function getStoredTheme() {
+        return localStorage.getItem("ph_theme") || "light";
+    }
+
+    function applyTheme(theme) {
+        if (theme === "dark") {
+            document.documentElement.setAttribute("data-theme", "dark");
+        } else {
+            document.documentElement.removeAttribute("data-theme");
+        }
+        localStorage.setItem("ph_theme", theme);
+        updateIcons(theme);
+    }
+
+    function updateIcons(theme) {
+        const icons = document.querySelectorAll("#themeToggleBtn i, .theme-toggle-btn i");
+        icons.forEach(icon => {
+            if (theme === "dark") {
+                icon.className = "fa-solid fa-sun";
+                icon.style.color = "#f59e0b";
+            } else {
+                icon.className = "fa-solid fa-moon";
+                icon.style.color = "";
+            }
+        });
+    }
+
+    applyTheme(getStoredTheme());
+
+    function bindToggleButtons() {
+        updateIcons(getStoredTheme());
+        const toggleButtons = document.querySelectorAll("#themeToggleBtn, .theme-toggle-btn");
+        toggleButtons.forEach(btn => {
+            if (!btn.dataset.themeBound) {
+                btn.dataset.themeBound = "true";
+                btn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    const current = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+                    applyTheme(current);
+                });
+            }
+        });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", bindToggleButtons);
+    } else {
+        bindToggleButtons();
+    }
+})();
