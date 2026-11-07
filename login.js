@@ -43,7 +43,7 @@ loginForm.addEventListener("submit", async function (event) {
                 body: JSON.stringify({ email, password }),
                 signal: controller.signal
             });
-            clearTimeout(timeoutId);
+
 
             const result = await response.json();
 
