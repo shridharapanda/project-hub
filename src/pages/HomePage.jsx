@@ -29,6 +29,13 @@ export default function HomePage({ searchQuery = '' }) {
 
   useEffect(() => {
     loadProjects();
+    const handleSync = () => loadProjects();
+    window.addEventListener('ph_profile_updated', handleSync);
+    window.addEventListener('storage', handleSync);
+    return () => {
+      window.removeEventListener('ph_profile_updated', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
   }, []);
 
   const loadProjects = async () => {
@@ -61,21 +68,35 @@ export default function HomePage({ searchQuery = '' }) {
     const { updatedProjects, action, project } = api.likeProject(projectId, user.email);
     setProjects(updatedProjects);
 
-    if (action === 'liked') {
-      addNotification({
-        icon: 'fa-heart',
-        title: 'Project Liked',
-        description: `You liked "${project?.title || 'a project'}".`,
-        fromUser: user.name
-      });
+    if (action === 'liked' && project) {
+      const authorEmail = project.author?.email || (project.author?.name === 'Shridhara Panda' ? 'shridhara.panda@gmail.com' : (project.author?.name || ''));
+      const authorName = project.author?.name || 'Project Lead';
+
+      const myEmail = (user.email || '').toLowerCase().trim();
+      const myName = (user.name || '').toLowerCase().trim();
+      const isMyOwnProject = (myEmail && authorEmail.toLowerCase().trim() === myEmail) || (myName && authorName.toLowerCase().trim() === myName);
+
+      if (!isMyOwnProject) {
+        addNotification({
+          icon: 'fa-heart',
+          title: 'Project Liked ❤️',
+          description: `${user.name || 'A builder'} liked your project "${project.title}".`,
+          fromName: user.name || 'Student Builder',
+          fromEmail: user.email || '',
+          toName: authorName,
+          toEmail: authorEmail
+        });
+      }
     }
   };
 
   const handleAddComment = (projectId, comment) => {
+    let targetProject = commentProject;
     setProjects(prevProjects => {
       const updated = prevProjects.map(p => {
         const id = p.id || p._id;
         if (id === projectId) {
+          targetProject = p;
           const comments = p.comments || [];
           return {
             ...p,
@@ -96,22 +117,46 @@ export default function HomePage({ searchQuery = '' }) {
       };
     });
 
-    addNotification({
-      icon: 'fa-comment',
-      title: 'New Comment Added',
-      description: `Comment posted on "${commentProject?.title || 'project'}".`,
-      fromUser: user?.name
-    });
+    if (targetProject) {
+      const authorEmail = targetProject.author?.email || (targetProject.author?.name === 'Shridhara Panda' ? 'shridhara.panda@gmail.com' : (targetProject.author?.name || ''));
+      const authorName = targetProject.author?.name || 'Project Lead';
+
+      const myEmail = (user?.email || '').toLowerCase().trim();
+      const myName = (user?.name || '').toLowerCase().trim();
+      const isMyOwnProject = (myEmail && authorEmail.toLowerCase().trim() === myEmail) || (myName && authorName.toLowerCase().trim() === myName);
+
+      if (!isMyOwnProject) {
+        addNotification({
+          icon: 'fa-comment',
+          title: 'New Comment on Your Project 💬',
+          description: `${user?.name || 'A builder'} commented on "${targetProject.title}": "${(comment.text || '').slice(0, 45)}..."`,
+          fromName: user?.name || 'Student Builder',
+          fromEmail: user?.email || '',
+          toName: authorName,
+          toEmail: authorEmail
+        });
+      }
+    }
   };
 
   const handleCollaborateSubmit = (projectId, collabData) => {
     api.submitCollaboration(projectId, collabData);
+    const authorEmail = collaborateProject?.author?.email || (collaborateProject?.author?.name === 'Shridhara Panda' ? 'shridhara.panda@gmail.com' : (collaborateProject?.author?.name || ''));
+    const authorName = collaborateProject?.author?.name || 'Project Lead';
+
     addNotification({
       icon: 'fa-user-plus',
-      title: 'Collaboration Request Sent',
-      description: `Request sent to join "${collaborateProject?.title || 'project'}" as ${collabData.role}.`,
+      title: 'New Collaboration Request 🤝',
+      description: `${user?.name || 'A student'} wants to join "${collaborateProject?.title || 'project'}" as ${collabData.role}.`,
       action: 'collab',
-      fromUser: user?.name
+      status: 'pending',
+      role: collabData.role,
+      projectTitle: collaborateProject?.title || 'Project',
+      projectId: projectId,
+      fromName: user?.name || 'Student Builder',
+      fromEmail: user?.email || '',
+      toName: authorName,
+      toEmail: authorEmail
     });
   };
 

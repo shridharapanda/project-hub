@@ -53,7 +53,11 @@ export function NotificationProvider({ children }) {
       time: 'Just now',
       read: false,
       action: notif.action || null,
-      fromUser: notif.fromUser || null,
+      fromName: notif.fromName || user?.name || null,
+      fromEmail: notif.fromEmail || user?.email || null,
+      toName: notif.toName || null,
+      toEmail: notif.toEmail || null,
+      status: notif.status || 'pending',
       ...notif
     };
 
@@ -69,8 +73,16 @@ export function NotificationProvider({ children }) {
   };
 
   const markAllRead = () => {
+    const userEmailNorm = (user?.email || '').toLowerCase().trim();
+    const userNameNorm = (user?.name || '').toLowerCase().trim();
+
     setNotifications(prev => {
-      const updated = prev.map(n => ({ ...n, read: true }));
+      const updated = prev.map(n => {
+        const targetEmail = (n.toEmail || '').toLowerCase().trim();
+        const targetName = (n.toName || '').toLowerCase().trim();
+        const matchesUser = !n.toEmail || (userEmailNorm && targetEmail === userEmailNorm) || (userNameNorm && targetName === userNameNorm);
+        return matchesUser ? { ...n, read: true } : n;
+      });
       try {
         localStorage.setItem('ph_notifications', JSON.stringify(updated));
       } catch (e) {}
@@ -90,41 +102,137 @@ export function NotificationProvider({ children }) {
     window.dispatchEvent(new Event('ph_notification_event'));
   };
 
-  const acceptRequest = (notifId, requesterName) => {
-    // Increment connection count for current user
-    if (user && updateProfile) {
-      updateProfile({
-        connectionsCount: (user.connectionsCount || 0) + 1
-      });
-    }
+  const acceptRequest = (notifId) => {
+    const notif = notifications.find(n => n.id === notifId);
+    if (!notif) return;
 
-    setNotifications(prev => {
-      const updated = prev.map(n => {
-        if (n.id === notifId) {
-          return {
+    if (notif.action === 'connect') {
+      // 1. Increment connection count for recipient (current user)
+      if (user && updateProfile) {
+        updateProfile({
+          connectionsCount: (user.connectionsCount || 0) + 1
+        });
+      }
+
+      // 2. Increment connection count for requester in user database
+      try {
+        const db = JSON.parse(localStorage.getItem('ph_users_db') || '{}');
+        const reqEmail = (notif.fromEmail || '').toLowerCase().trim();
+        if (reqEmail && db[reqEmail]) {
+          db[reqEmail].connectionsCount = (db[reqEmail].connectionsCount || 0) + 1;
+          localStorage.setItem('ph_users_db', JSON.stringify(db));
+        }
+      } catch (e) {}
+
+      // 3. Record reciprocal connection in ph_connections
+      try {
+        const connMap = JSON.parse(localStorage.getItem('ph_connections') || '{}');
+        const myKey = (user?.email || user?.name || '').toLowerCase().trim();
+        const theirKey = (notif.fromEmail || notif.fromName || '').toLowerCase().trim();
+
+        if (myKey && theirKey) {
+          connMap[myKey] = connMap[myKey] || [];
+          if (!connMap[myKey].includes(theirKey)) connMap[myKey].push(theirKey);
+
+          connMap[theirKey] = connMap[theirKey] || [];
+          if (!connMap[theirKey].includes(myKey)) connMap[theirKey].push(myKey);
+
+          localStorage.setItem('ph_connections', JSON.stringify(connMap));
+        }
+      } catch (e) {}
+
+      // 4. Send acceptance notification back to requester
+      const acceptanceNotif = {
+        id: 'notif-' + Date.now(),
+        icon: 'fa-user-check',
+        title: 'Connection Accepted 🎉',
+        description: `${user?.name || 'A builder'} accepted your connection request!`,
+        toEmail: notif.fromEmail,
+        toName: notif.fromName,
+        fromEmail: user?.email,
+        fromName: user?.name,
+        time: 'Just now',
+        read: false
+      };
+
+      setNotifications(prev => {
+        const updated = [
+          acceptanceNotif,
+          ...prev.map(n => n.id === notifId ? {
             ...n,
             read: true,
             action: null,
-            description: `You are now connected with ${requesterName || n.fromUser || 'this student'}! ✓`
-          };
-        }
-        return n;
+            status: 'accepted',
+            description: `You are now connected with ${notif.fromName || 'this student'}! ✓`
+          } : n)
+        ];
+        try {
+          localStorage.setItem('ph_notifications', JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
       });
-      try {
-        localStorage.setItem('ph_notifications', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
+    } else if (notif.action === 'collab') {
+      // Collaboration Accepted
+      const acceptanceNotif = {
+        id: 'notif-' + Date.now(),
+        icon: 'fa-circle-check',
+        title: 'Collaboration Accepted 🤝',
+        description: `${user?.name || 'Project lead'} accepted you into "${notif.projectTitle}" as ${notif.role}!`,
+        toEmail: notif.fromEmail,
+        toName: notif.fromName,
+        fromEmail: user?.email,
+        fromName: user?.name,
+        time: 'Just now',
+        read: false
+      };
+
+      setNotifications(prev => {
+        const updated = [
+          acceptanceNotif,
+          ...prev.map(n => n.id === notifId ? {
+            ...n,
+            read: true,
+            action: null,
+            status: 'accepted',
+            description: `Accepted ${notif.fromName} into "${notif.projectTitle}" as ${notif.role}! ✓`
+          } : n)
+        ];
+        try {
+          localStorage.setItem('ph_notifications', JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
+      });
+    }
 
     window.dispatchEvent(new Event('ph_notification_event'));
+    window.dispatchEvent(new Event('ph_connections_updated'));
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // Only display notifications meant for the current user
+  const userEmailNorm = (user?.email || '').toLowerCase().trim();
+  const userNameNorm = (user?.name || '').toLowerCase().trim();
+
+  const visibleNotifications = notifications.filter(n => {
+    if (!user) return true;
+    const targetEmail = (n.toEmail || '').toLowerCase().trim();
+    const targetName = (n.toName || '').toLowerCase().trim();
+
+    // If targeted to a specific user, only that user should see it
+    if (targetEmail || targetName) {
+      return (userEmailNorm && targetEmail === userEmailNorm) ||
+             (userNameNorm && targetName === userNameNorm);
+    }
+    // General or system broadcast
+    return true;
+  });
+
+  const unreadCount = visibleNotifications.filter(n => !n.read).length;
 
   return (
     <NotificationContext.Provider
       value={{
-        notifications,
+        notifications: visibleNotifications,
+        allNotifications: notifications,
         unreadCount,
         addNotification,
         markAllRead,

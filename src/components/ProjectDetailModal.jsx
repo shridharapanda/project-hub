@@ -3,6 +3,20 @@ import React from 'react';
 export default function ProjectDetailModal({ project, isOpen, onClose, onCollaborate }) {
   if (!isOpen || !project) return null;
 
+  const author = project.author || project.creator;
+  let authorAvatar = author?.avatarImage || author?.profilePicture || null;
+  if (!authorAvatar && author) {
+    try {
+      const db = JSON.parse(localStorage.getItem('ph_users_db') || '{}');
+      const authorEmail = (author.email || '').toLowerCase().trim();
+      const authorName = (author.name || '').toLowerCase().trim();
+      const matched = (authorEmail && db[authorEmail]) || (authorName && db[authorName]);
+      if (matched) {
+        authorAvatar = matched.avatarImage || matched.profilePicture || null;
+      }
+    } catch (e) {}
+  }
+
   return (
     <div
       className="modal-backdrop active"
@@ -33,22 +47,22 @@ export default function ProjectDetailModal({ project, isOpen, onClose, onCollabo
           {project.description}
         </p>
 
-        {(project.author || project.creator) && (
+        {author && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '16px' }}>
             <div className="project-avatar" style={{ width: '36px', height: '36px', fontSize: '13px', overflow: 'hidden' }}>
-              {(project.author?.avatarImage || project.creator?.avatarImage) ? (
+              {authorAvatar ? (
                 <img
-                  src={project.author?.avatarImage || project.creator?.avatarImage}
-                  alt={project.author?.name || project.creator?.name}
+                  src={authorAvatar}
+                  alt={author.name}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               ) : (
-                project.author?.initials || project.creator?.avatar || (project.author?.name || project.creator?.name || 'PH').slice(0, 2).toUpperCase()
+                author.initials || author.avatar || (author.name || 'PH').slice(0, 2).toUpperCase()
               )}
             </div>
             <div>
-              <strong style={{ fontSize: '14px', display: 'block' }}>{project.author?.name || project.creator?.name}</strong>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{project.author?.college || project.creator?.college || 'Builder'}</span>
+              <strong style={{ fontSize: '14px', display: 'block' }}>{author.name}</strong>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{author.college || author.role || 'Builder'}</span>
             </div>
           </div>
         )}

@@ -3,7 +3,7 @@ import { api } from '../services/api';
 
 const AuthContext = createContext();
 
-// Helper to access persistent user database keyed by email
+// Helper to access persistent user database keyed by email and name
 function getUsersDb() {
   try {
     const raw = localStorage.getItem('ph_users_db');
@@ -14,15 +14,19 @@ function getUsersDb() {
 }
 
 function saveUserToDb(userData) {
-  if (!userData || !userData.email) return;
+  if (!userData) return;
   try {
     const db = getUsersDb();
-    const emailKey = userData.email.toLowerCase().trim();
-    const existing = db[emailKey] || {};
-    const merged = { ...existing, ...userData };
-    db[emailKey] = merged;
+    if (userData.email) {
+      const emailKey = userData.email.toLowerCase().trim();
+      db[emailKey] = { ...(db[emailKey] || {}), ...userData };
+    }
+    if (userData.name) {
+      const nameKey = userData.name.toLowerCase().trim();
+      db[nameKey] = { ...(db[nameKey] || {}), ...userData };
+    }
     localStorage.setItem('ph_users_db', JSON.stringify(db));
-    return merged;
+    return userData;
   } catch (e) {
     console.error('Failed to save to users db', e);
   }
@@ -43,8 +47,10 @@ export function AuthProvider({ children }) {
       if (!stored) return null;
       const parsed = JSON.parse(stored);
       // Double check if database has fresher profile photo/cover
-      if (parsed?.email) {
-        const fromDb = getUsersDb()[parsed.email.toLowerCase().trim()];
+      if (parsed?.email || parsed?.name) {
+        const db = getUsersDb();
+        const fromDb = (parsed.email && db[parsed.email.toLowerCase().trim()]) ||
+                       (parsed.name && db[parsed.name.toLowerCase().trim()]);
         if (fromDb) return { ...parsed, ...fromDb };
       }
       return parsed;
@@ -206,13 +212,19 @@ export function AuthProvider({ children }) {
 
   const updateProfile = (updatedFields) => {
     setUser(prev => {
-      if (!prev) return prev;
+      const base = prev || {
+        name: "Shridhara Panda",
+        email: "shridhara.panda@gmail.com",
+        role: "Computer Science Student",
+        college: "VSSUT, Burla"
+      };
       const updated = {
-        ...prev,
+        ...base,
         ...updatedFields
       };
       saveUserToDb(updated);
       localStorage.setItem('ph_current_user', JSON.stringify(updated));
+      api.syncUserProfileAcrossPlatform(updated);
       return updated;
     });
   };

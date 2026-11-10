@@ -29,6 +29,20 @@ export default function ProjectCard({
     avatarColor: "purple"
   };
 
+  // Dynamically resolve author avatar from author object or persistent users database
+  let authorAvatar = author.avatarImage || author.profilePicture || null;
+  if (!authorAvatar) {
+    try {
+      const db = JSON.parse(localStorage.getItem('ph_users_db') || '{}');
+      const authorEmail = (author.email || '').toLowerCase().trim();
+      const authorName = (author.name || '').toLowerCase().trim();
+      const matched = (authorEmail && db[authorEmail]) || (authorName && db[authorName]);
+      if (matched) {
+        authorAvatar = matched.avatarImage || matched.profilePicture || null;
+      }
+    } catch (e) {}
+  }
+
   const handleLikeClick = (e) => {
     e.stopPropagation();
     if (onLike) {
@@ -70,9 +84,9 @@ export default function ProjectCard({
       <div className="project-header">
         <div className="user">
           <div className={`project-avatar ${author.avatarColor || 'purple'}`} style={{ overflow: 'hidden' }}>
-            {author.avatarImage ? (
+            {authorAvatar ? (
               <img
-                src={author.avatarImage}
+                src={authorAvatar}
                 alt={author.name}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />

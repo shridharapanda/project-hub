@@ -15,14 +15,22 @@ export default function CollaborateModal({ project, isOpen, onClose, onSubmitReq
     e.preventDefault();
     if (onSubmitRequest) {
       onSubmitRequest(project.id || project._id, { role, message });
-    }
-    if (addNotification) {
+    } else if (addNotification) {
+      const authorEmail = project.author?.email || (project.author?.name === 'Shridhara Panda' ? 'shridhara.panda@gmail.com' : (project.author?.name || ''));
+      const authorName = project.author?.name || 'Project Lead';
       addNotification({
         icon: 'fa-user-plus',
-        title: 'Collaboration Request Sent',
-        description: `Request sent to join "${project.title}" as ${role}.`,
+        title: 'New Collaboration Request 🤝',
+        description: `${user?.name || 'A student'} wants to join "${project.title}" as ${role}.`,
         action: 'collab',
-        fromUser: user?.name || 'A student builder'
+        status: 'pending',
+        role,
+        projectTitle: project.title,
+        projectId: project.id || project._id,
+        fromName: user?.name || 'Student Builder',
+        fromEmail: user?.email || '',
+        toName: authorName,
+        toEmail: authorEmail
       });
     }
     setSubmitted(true);

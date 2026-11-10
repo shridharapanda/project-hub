@@ -6,13 +6,14 @@ import { api } from '../services/api';
 
 export default function MembersPage() {
   const { user } = useAuth();
-  const { addNotification } = useNotifications();
+  const { addNotification, allNotifications } = useNotifications();
 
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedRole, setSelectedRole] = useState('All');
   const [availabilityFilter, setAvailabilityFilter] = useState('all');
+  const [, setRefreshKey] = useState(0);
   const [connectedMap, setConnectedMap] = useState(() => {
     try {
       const saved = localStorage.getItem('ph_connected_members');
@@ -34,6 +35,20 @@ export default function MembersPage() {
 
   useEffect(() => {
     loadMembers();
+    const handleSync = () => {
+      loadMembers();
+      setRefreshKey(prev => prev + 1);
+    };
+    window.addEventListener('ph_profile_updated', handleSync);
+    window.addEventListener('ph_connections_updated', handleSync);
+    window.addEventListener('ph_notification_event', handleSync);
+    window.addEventListener('storage', handleSync);
+    return () => {
+      window.removeEventListener('ph_profile_updated', handleSync);
+      window.removeEventListener('ph_connections_updated', handleSync);
+      window.removeEventListener('ph_notification_event', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
   }, []);
 
   const loadMembers = async () => {
@@ -53,29 +68,140 @@ export default function MembersPage() {
     setTimeout(() => setToastMessage(''), 3500);
   };
 
-  const handleConnect = (member) => {
-    const isCurrentlyConnected = Boolean(connectedMap[member.id]);
-    const updated = {
-      ...connectedMap,
-      [member.id]: !isCurrentlyConnected
-    };
-    setConnectedMap(updated);
+  const resolveMemberAvatar = (member) => {
+    if (member.avatarImage || member.profilePicture) {
+      return member.avatarImage || member.profilePicture;
+    }
     try {
-      localStorage.setItem('ph_connected_members', JSON.stringify(updated));
+      const db = JSON.parse(localStorage.getItem('ph_users_db') || '{}');
+      const mEmail = (member.email || '').toLowerCase().trim();
+      const mName = (member.name || '').toLowerCase().trim();
+      const matched = (mEmail && db[mEmail]) || (mName && db[mName]);
+      if (matched && (matched.avatarImage || matched.profilePicture)) {
+        return matched.avatarImage || matched.profilePicture;
+      }
+    } catch (e) {}
+    return null;
+  };
+
+  const checkConnectionStatus = (member) => {
+    const isSelf = user && (
+      (user.email && member.email && user.email.toLowerCase().trim() === member.email.toLowerCase().trim()) ||
+      (user.name && member.name && user.name.toLowerCase().trim() === member.name.toLowerCase().trim())
+    );
+    if (isSelf) return 'self';
+
+    // 1. Check ph_connections for bidirectional connection
+    try {
+      const connMap = JSON.parse(localStorage.getItem('ph_connections') || '{}');
+      const myKeys = [
+        (user?.email || '').toLowerCase().trim(),
+        (user?.name || '').toLowerCase().trim()
+      ].filter(Boolean);
+
+      const theirKeys = [
+        (member.email || '').toLowerCase().trim(),
+        (member.name || '').toLowerCase().trim(),
+        String(member.id || '').toLowerCase().trim()
+      ].filter(Boolean);
+
+      for (const myKey of myKeys) {
+        const list = connMap[myKey] || [];
+        for (const theirKey of theirKeys) {
+          if (list.includes(theirKey)) return 'connected';
+        }
+      }
     } catch (e) {}
 
-    if (!isCurrentlyConnected) {
-      showToast(`Connection request sent to ${member.name}!`);
-      addNotification({
-        icon: 'fa-user-plus',
-        title: 'Connection Request Sent',
-        description: `You sent a connection request to ${member.name}.`,
-        action: 'connect',
-        fromUser: member.name
-      });
-    } else {
-      showToast(`Disconnected from ${member.name}.`);
+    // Fallback check
+    if (connectedMap[member.id] || member.connected) {
+      return 'connected';
     }
+
+    // 2. Check pending outgoing request
+    const myEmail = (user?.email || '').toLowerCase().trim();
+    const myName = (user?.name || '').toLowerCase().trim();
+    const theirEmail = (member.email || '').toLowerCase().trim();
+    const theirName = (member.name || '').toLowerCase().trim();
+
+    const notifList = allNotifications || [];
+    const isPending = notifList.some(n => {
+      if (n.action !== 'connect' || n.status === 'accepted') return false;
+      const fEmail = (n.fromEmail || '').toLowerCase().trim();
+      const fName = (n.fromName || '').toLowerCase().trim();
+      const tEmail = (n.toEmail || '').toLowerCase().trim();
+      const tName = (n.toName || '').toLowerCase().trim();
+
+      const sentByMe = (myEmail && fEmail === myEmail) || (myName && fName === myName);
+      const toThem = (theirEmail && tEmail === theirEmail) || (theirName && tName === theirName);
+      return sentByMe && toThem;
+    });
+
+    if (isPending) return 'pending';
+
+    return 'none';
+  };
+
+  const handleConnect = (member) => {
+    if (!user) {
+      showToast('Please log in to connect with members.');
+      return;
+    }
+
+    const status = checkConnectionStatus(member);
+    if (status === 'self') {
+      showToast('This is your own profile! Click your avatar in the navbar to customize.');
+      return;
+    }
+
+    if (status === 'connected') {
+      // Disconnect
+      try {
+        const connMap = JSON.parse(localStorage.getItem('ph_connections') || '{}');
+        const myKey = (user.email || user.name || '').toLowerCase().trim();
+        const theirKey = (member.email || member.name || '').toLowerCase().trim();
+        if (myKey && connMap[myKey]) {
+          connMap[myKey] = connMap[myKey].filter(k => k !== theirKey);
+        }
+        if (theirKey && connMap[theirKey]) {
+          connMap[theirKey] = connMap[theirKey].filter(k => k !== myKey);
+        }
+        localStorage.setItem('ph_connections', JSON.stringify(connMap));
+      } catch (e) {}
+
+      setConnectedMap(prev => {
+        const updated = { ...prev, [member.id]: false };
+        try { localStorage.setItem('ph_connected_members', JSON.stringify(updated)); } catch (e) {}
+        return updated;
+      });
+
+      showToast(`Disconnected from ${member.name}.`);
+      window.dispatchEvent(new Event('ph_connections_updated'));
+      return;
+    }
+
+    if (status === 'pending') {
+      showToast(`Connection request already sent to ${member.name}. Waiting for approval! ⏳`);
+      return;
+    }
+
+    // Send targeted connection request
+    const targetEmail = member.email || (member.name === 'Shridhara Panda' ? 'shridhara.panda@gmail.com' : (member.name.toLowerCase().replace(/\s+/g, '.') + '@vssut.ac.in'));
+
+    addNotification({
+      icon: 'fa-user-plus',
+      title: 'New Connection Request',
+      description: `${user.name || 'A student'} wants to connect with you.`,
+      action: 'connect',
+      status: 'pending',
+      fromName: user.name || 'Student Builder',
+      fromEmail: user.email || '',
+      toName: member.name,
+      toEmail: targetEmail
+    });
+
+    showToast(`Connection request sent to ${member.name}! ⏳`);
+    window.dispatchEvent(new Event('ph_connections_updated'));
   };
 
   const handleCreateProfile = (e) => {
@@ -241,12 +367,18 @@ export default function MembersPage() {
           </div>
         ) : (
           filteredMembers.map(member => {
-            const isConnected = connectedMap[member.id];
+            const status = checkConnectionStatus(member);
+            const avatarImg = resolveMemberAvatar(member);
+
             return (
               <article key={member.id} className="card member-card">
                 <div
                   className="member-avatar"
                   style={{
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     background: member.mentor
                       ? 'linear-gradient(135deg, #fb923c, #f43f5e)'
                       : member.category === 'UI/UX'
@@ -256,7 +388,15 @@ export default function MembersPage() {
                       : 'linear-gradient(135deg, #6366f1, #3b82f6)'
                   }}
                 >
-                  {member.avatar || member.name.slice(0, 2).toUpperCase()}
+                  {avatarImg ? (
+                    <img
+                      src={avatarImg}
+                      alt={member.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    member.avatar || member.name.slice(0, 2).toUpperCase()
+                  )}
                 </div>
                 <h3>{member.name}</h3>
                 <div className="member-role">{member.role}</div>
@@ -284,11 +424,25 @@ export default function MembersPage() {
                 </div>
 
                 <button
-                  className={`secondary-btn full-btn connect-btn ${isConnected ? 'active' : ''}`}
-                  style={isConnected ? { background: '#10b981', color: '#fff', borderColor: '#10b981' } : {}}
+                  className={`secondary-btn full-btn connect-btn ${status === 'connected' ? 'active' : ''}`}
+                  style={
+                    status === 'self'
+                      ? { opacity: 0.7, cursor: 'default' }
+                      : status === 'connected'
+                      ? { background: '#10b981', color: '#fff', borderColor: '#10b981' }
+                      : status === 'pending'
+                      ? { background: '#f59e0b', color: '#fff', borderColor: '#f59e0b' }
+                      : {}
+                  }
                   onClick={() => handleConnect(member)}
                 >
-                  {isConnected ? `Connected with ${member.name.split(' ')[0]} ✓` : `Connect with ${member.name.split(' ')[0]}`}
+                  {status === 'self'
+                    ? 'You (Profile)'
+                    : status === 'connected'
+                    ? `Connected with ${member.name.split(' ')[0]} ✓`
+                    : status === 'pending'
+                    ? 'Request Pending ⏳'
+                    : `Connect with ${member.name.split(' ')[0]}`}
                 </button>
               </article>
             );

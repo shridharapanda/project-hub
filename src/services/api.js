@@ -98,16 +98,81 @@ export const api = {
 
   // Projects
   async getProjects() {
+    let list = getStorage("ph_projects", initialProjects);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/projects`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) return data;
-      }
+      const usersDb = JSON.parse(localStorage.getItem('ph_users_db') || '{}');
+      list = list.map(p => {
+        if (!p.author) return p;
+        const pAuthorEmail = (p.author.email || '').toLowerCase().trim();
+        const pAuthorName = (p.author.name || '').toLowerCase().trim();
+        const authorUser = (pAuthorEmail && usersDb[pAuthorEmail]) || (pAuthorName && usersDb[pAuthorName]);
+        if (authorUser && (authorUser.avatarImage || authorUser.profilePicture)) {
+          return {
+            ...p,
+            author: {
+              ...p.author,
+              avatarImage: authorUser.avatarImage || authorUser.profilePicture
+            }
+          };
+        }
+        return p;
+      });
+    } catch (e) {}
+    return list;
+  },
+
+  syncUserProfileAcrossPlatform(user) {
+    if (!user) return;
+    try {
+      const avatar = user.avatarImage || user.profilePicture || null;
+      const userNameNorm = (user.name || '').toLowerCase().trim();
+      const userEmailNorm = (user.email || '').toLowerCase().trim();
+
+      // 1. Update author on all projects
+      const projects = getStorage("ph_projects", initialProjects);
+      const updatedProjects = projects.map(p => {
+        const pAuthorName = (p.author?.name || '').toLowerCase().trim();
+        const pAuthorEmail = (p.author?.email || '').toLowerCase().trim();
+        if ((userEmailNorm && pAuthorEmail === userEmailNorm) || (userNameNorm && pAuthorName === userNameNorm)) {
+          return {
+            ...p,
+            author: {
+              ...p.author,
+              name: user.name,
+              avatarImage: avatar,
+              college: user.college || p.author?.college,
+              role: user.role || p.author?.role
+            }
+          };
+        }
+        return p;
+      });
+      setStorage("ph_projects", updatedProjects);
+
+      // 2. Update member listing
+      const members = getStorage("ph_members", initialMembers);
+      const updatedMembers = members.map(m => {
+        const mName = (m.name || '').toLowerCase().trim();
+        const mEmail = (m.email || '').toLowerCase().trim();
+        if ((userEmailNorm && mEmail === userEmailNorm) || (userNameNorm && mName === userNameNorm)) {
+          return {
+            ...m,
+            name: user.name,
+            avatarImage: avatar,
+            college: user.college || m.college,
+            role: user.role || m.role,
+            skills: user.skills || m.skills
+          };
+        }
+        return m;
+      });
+      setStorage("ph_members", updatedMembers);
+
+      // Trigger instant cross-component refresh
+      window.dispatchEvent(new Event('ph_profile_updated'));
     } catch (e) {
-      // fallback
+      console.warn("Failed to sync user across platform", e);
     }
-    return getStorage("ph_projects", initialProjects);
   },
 
   saveProjects(projects) {
@@ -237,16 +302,26 @@ export const api = {
 
   // Members
   async getMembers() {
+    let list = getStorage("ph_members", initialMembers);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/members`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) return data;
-      }
-    } catch (e) {
-      // fallback
-    }
-    return getStorage("ph_members", initialMembers);
+      const usersDb = JSON.parse(localStorage.getItem('ph_users_db') || '{}');
+      list = list.map(m => {
+        const mEmail = (m.email || '').toLowerCase().trim();
+        const mName = (m.name || '').toLowerCase().trim();
+        const matchedUser = (mEmail && usersDb[mEmail]) || (mName && usersDb[mName]);
+        if (matchedUser && (matchedUser.avatarImage || matchedUser.profilePicture)) {
+          return {
+            ...m,
+            avatarImage: matchedUser.avatarImage || matchedUser.profilePicture,
+            college: matchedUser.college || m.college,
+            role: matchedUser.role || m.role,
+            skills: matchedUser.skills || m.skills
+          };
+        }
+        return m;
+      });
+    } catch (e) {}
+    return list;
   },
 
   saveMembers(members) {
