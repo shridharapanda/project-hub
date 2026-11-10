@@ -71,9 +71,29 @@ export default function HomePage({ searchQuery = '' }) {
       <aside className="left">
         {/* Profile Summary Card */}
         <div className="card profile reveal" style={{ opacity: 1, transform: 'none' }}>
-          <div className="profile-cover"></div>
-          <div className="profile-avatar">
-            {user?.name ? user.name.slice(0, 2).toUpperCase() : 'SP'}
+          <div
+            className="profile-cover"
+            style={
+              user?.coverImage
+                ? {
+                    backgroundImage: `url(${user.coverImage})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat'
+                  }
+                : {}
+            }
+          ></div>
+          <div className="profile-avatar" style={{ overflow: 'hidden' }}>
+            {user?.avatarImage || user?.profilePicture ? (
+              <img
+                src={user.avatarImage || user.profilePicture}
+                alt={user?.name || 'Profile Avatar'}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              user?.name ? user.name.slice(0, 2).toUpperCase() : 'SP'
+            )}
           </div>
 
           <h2>{user?.name || 'Shridhara Panda'}</h2>

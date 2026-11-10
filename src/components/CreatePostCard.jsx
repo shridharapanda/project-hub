@@ -35,7 +35,17 @@ export default function CreatePostCard({ onCreatePost }) {
     <div className="create-post card">
       <form onSubmit={handleSubmit}>
         <div className="post-top">
-          <div className="avatar small-avatar">{initials}</div>
+          <div className="avatar small-avatar" style={{ overflow: 'hidden' }}>
+            {user?.avatarImage || user?.profilePicture ? (
+              <img
+                src={user.avatarImage || user.profilePicture}
+                alt="Avatar"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+              />
+            ) : (
+              initials
+            )}
+          </div>
           <textarea
             id="postText"
             placeholder="Share a project update, find teammates, or post an idea..."

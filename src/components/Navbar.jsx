@@ -123,8 +123,17 @@ export default function Navbar({ notifications = [], onMarkAllRead, onNotificati
               onClick={() => setShowProfileModal(true)}
               title="Customize your profile"
               aria-label="Open your profile"
+              style={{ overflow: 'hidden', padding: 0 }}
             >
-              {initials}
+              {user?.avatarImage || user?.profilePicture ? (
+                <img
+                  src={user.avatarImage || user.profilePicture}
+                  alt={user?.name || 'Avatar'}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                />
+              ) : (
+                initials
+              )}
             </button>
           ) : (
             <NavLink to="/login" className="primary-btn-sm" style={{ padding: '8px 14px' }}>
