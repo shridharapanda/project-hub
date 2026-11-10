@@ -277,7 +277,7 @@ export default function HackathonsPage() {
       </section>
 
       {/* FOOTER CTA */}
-      <section className="side-note" style={{ margin: '40px 0', padding: '30px', borderRadius: '16px', background: 'var(--card-bg, #ffffff)', border: '1px solid var(--border-color, #e2e8f0)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+      <section className="side-note" style={{ margin: '40px 0', padding: '30px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
         <div>
           <h3>Don't have a team yet?</h3>
           <p style={{ color: 'var(--text-secondary)', marginTop: '6px' }}>

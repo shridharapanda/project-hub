@@ -1,11 +1,26 @@
 @import './style.css';
 @import './messages.css';
 
-/* React specific resets and smooth transitions */
+/* React root and background resets */
+html,
+body,
 #root {
   min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--text-color, #0f172a);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+#root {
   display: flex;
   flex-direction: column;
+}
+
+[data-theme="dark"] html,
+[data-theme="dark"] body,
+[data-theme="dark"] #root {
+  background-color: #050816 !important;
+  color: #f8fafc !important;
 }
 
 /* Ensure link colors inherit properly */

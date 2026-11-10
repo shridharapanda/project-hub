@@ -9,6 +9,10 @@
     --card-solid: #ffffff;
     --card-hover: #ffffff;
     --surface-subtle: #f1f5f9;
+    --card-bg: #ffffff;
+    --input-bg: #ffffff;
+    --border-color: #e2e8f0;
+    --text-color: #0f172a;
 
     /* Primary Accent (Royal Indigo) */
     --primary: #4f46e5;
@@ -2391,6 +2395,10 @@ a {
     --card-solid: #0c1226;
     --card-hover: #111827;
     --surface-subtle: rgba(255, 255, 255, 0.04);
+    --card-bg: #0c1226;
+    --input-bg: #111827;
+    --border-color: rgba(255, 255, 255, 0.12);
+    --text-color: #f8fafc;
 
     --primary: #7c6cff;
     --primary-light: #a78bfa;
@@ -2424,8 +2432,10 @@ a {
 }
 
 [data-theme="dark"] .navbar {
-    background: rgba(5, 8, 22, 0.82);
-    border-bottom: 1px solid var(--border);
+    background: rgba(5, 8, 22, 0.96);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
 }
 
 [data-theme="dark"] .search {
@@ -2618,4 +2628,36 @@ a {
 
 [data-theme="dark"] .orb {
     opacity: 0.22;
+}
+
+/* Dark Mode Enhancements for Cards, Headers, and Background */
+[data-theme="dark"] body {
+    background-color: #050816;
+}
+
+[data-theme="dark"] .login-card {
+    background: #0c1226 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="dark"] .login-card input {
+    background: #111827 !important;
+    color: #f8fafc !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+[data-theme="dark"] .google-btn {
+    background: #111827 !important;
+    color: #f8fafc !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+[data-theme="dark"] .google-btn:hover {
+    background: #1a233a !important;
+}
+
+[data-theme="dark"] .side-note {
+    background: #0c1226 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
 }

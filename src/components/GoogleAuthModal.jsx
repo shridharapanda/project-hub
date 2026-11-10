@@ -60,8 +60,8 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
         style={{
           width: '100%',
           maxWidth: '400px',
-          background: 'var(--card-bg, #ffffff)',
-          border: '1px solid var(--border-color, #e2e8f0)',
+          background: 'var(--card-solid)',
+          border: '1px solid var(--border)',
           borderRadius: '24px',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           overflow: 'hidden',
@@ -210,9 +210,9 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
                 style={{
                   width: '100%',
                   padding: '10px 12px',
-                  border: '1px solid var(--border-color, #cbd5e1)',
+                  border: '1px solid var(--border)',
                   borderRadius: '8px',
-                  background: 'var(--input-bg, #ffffff)',
+                  background: 'var(--input-bg)',
                   color: 'var(--text-color)'
                 }}
               />
@@ -231,9 +231,9 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
                 style={{
                   width: '100%',
                   padding: '10px 12px',
-                  border: '1px solid var(--border-color, #cbd5e1)',
+                  border: '1px solid var(--border)',
                   borderRadius: '8px',
-                  background: 'var(--input-bg, #ffffff)',
+                  background: 'var(--input-bg)',
                   color: 'var(--text-color)'
                 }}
               />

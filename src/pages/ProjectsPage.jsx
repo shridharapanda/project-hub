@@ -204,7 +204,7 @@ export default function ProjectsPage({ initialSearch = '' }) {
       </section>
 
       {/* BOTTOM CTA */}
-      <section className="side-note" style={{ margin: '40px 0', padding: '30px', borderRadius: '16px', background: 'var(--card-bg, #ffffff)', border: '1px solid var(--border-color, #e2e8f0)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+      <section className="side-note" style={{ margin: '40px 0', padding: '30px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
         <div>
           <h3>Your next great project starts with one teammate.</h3>
           <p style={{ color: 'var(--text-secondary)', marginTop: '6px' }}>

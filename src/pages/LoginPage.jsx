@@ -94,8 +94,8 @@ export default function LoginPage() {
         maxWidth: '420px',
         padding: '38px 32px',
         borderRadius: '20px',
-        background: 'var(--card-bg, #ffffff)',
-        border: '1px solid var(--border-color, #e2e8f0)',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--border-color)',
         boxShadow: '0 20px 45px -10px rgba(15, 23, 42, 0.08)'
       }}>
         <div className="logo" style={{
@@ -132,6 +132,7 @@ export default function LoginPage() {
         {/* ================= CONTINUE WITH GOOGLE BUTTON ================= */}
         <button
           type="button"
+          className="google-btn"
           onClick={() => setIsGoogleModalOpen(true)}
           disabled={loading}
           style={{
@@ -141,21 +142,15 @@ export default function LoginPage() {
             alignItems: 'center',
             justifyContent: 'center',
             gap: '12px',
-            border: '1px solid var(--border-color, #cbd5e1)',
+            border: '1px solid var(--border-color)',
             borderRadius: '10px',
-            background: 'var(--card-bg, #ffffff)',
-            color: 'var(--text-color, #1e293b)',
+            background: 'var(--card-bg)',
+            color: 'var(--text-color)',
             fontSize: '14px',
             fontWeight: 600,
             cursor: loading ? 'not-allowed' : 'pointer',
             transition: 'all 0.2s ease',
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.04)'
-          }}
-          onMouseEnter={(e) => {
-            if (!loading) e.currentTarget.style.backgroundColor = 'var(--panel-light, #f8fafc)';
-          }}
-          onMouseLeave={(e) => {
-            if (!loading) e.currentTarget.style.backgroundColor = 'var(--card-bg, #ffffff)';
           }}
         >
           {/* Google SVG Logo */}
@@ -204,10 +199,10 @@ export default function LoginPage() {
             style={{
               width: '100%',
               padding: '12px 14px',
-              border: '1px solid var(--border-color, #cbd5e1)',
+              border: '1px solid var(--border-color)',
               borderRadius: '10px',
-              background: 'var(--input-bg, #ffffff)',
-              color: 'var(--text-color, #0f172a)',
+              background: 'var(--input-bg)',
+              color: 'var(--text-color)',
               fontSize: '14px'
             }}
           />
@@ -232,10 +227,10 @@ export default function LoginPage() {
             style={{
               width: '100%',
               padding: '12px 14px',
-              border: '1px solid var(--border-color, #cbd5e1)',
+              border: '1px solid var(--border-color)',
               borderRadius: '10px',
-              background: 'var(--input-bg, #ffffff)',
-              color: 'var(--text-color, #0f172a)',
+              background: 'var(--input-bg)',
+              color: 'var(--text-color)',
               fontSize: '14px'
             }}
           />

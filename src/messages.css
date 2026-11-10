@@ -891,4 +891,120 @@ button {
 @keyframes toastIn {
     from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
-}
+}
+
+
+/* =====================================================
+   DARK THEME SYSTEM FOR MESSENGER
+===================================================== */
+[data-theme="dark"] .messenger {
+    background: #050816 !important;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .sidebar {
+    background: #0c1226 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .sidebar-header {
+    background: #0c1226 !important;
+}
+
+[data-theme="dark"] .sidebar-header h2 {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .back-btn {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .icon-btn {
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .icon-btn:hover {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: #7c6cff;
+}
+
+[data-theme="dark"] .chat-header {
+    background: #0c1226 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .chat-profile h3 {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .chat-area {
+    background:
+        radial-gradient(
+            circle at 80% 10%,
+            rgba(139, 92, 246, 0.1),
+            transparent 35%
+        ),
+        #050816 !important;
+}
+
+[data-theme="dark"] .message-form {
+    background: #0c1226 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .message-form input {
+    background: #111827 !important;
+    color: #f8fafc !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-theme="dark"] .message-form input:focus {
+    border-color: #7c6cff;
+}
+
+[data-theme="dark"] .search-box {
+    background: #111827 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .search-box input {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .chat-user {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .chat-user:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .chat-user.active {
+    background: rgba(139, 92, 246, 0.18) !important;
+    border-color: rgba(139, 92, 246, 0.3) !important;
+}
+
+[data-theme="dark"] .online-user {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .online-dot {
+    border-color: #0c1226;
+}
+
+[data-theme="dark"] .online-section {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .date-divider span {
+    background: #0c1226 !important;
+    color: #8b98ad;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .received .message-content p {
+    background: #111827 !important;
+    color: #f8fafc !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
