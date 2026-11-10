@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 
 export default function CollaborateModal({ project, isOpen, onClose, onSubmitRequest }) {
+  const { user } = useAuth();
+  const { addNotification } = useNotifications();
   const [role, setRole] = useState('Frontend Developer');
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -11,6 +15,15 @@ export default function CollaborateModal({ project, isOpen, onClose, onSubmitReq
     e.preventDefault();
     if (onSubmitRequest) {
       onSubmitRequest(project.id || project._id, { role, message });
+    }
+    if (addNotification) {
+      addNotification({
+        icon: 'fa-user-plus',
+        title: 'Collaboration Request Sent',
+        description: `Request sent to join "${project.title}" as ${role}.`,
+        action: 'collab',
+        fromUser: user?.name || 'A student builder'
+      });
     }
     setSubmitted(true);
     setTimeout(() => {

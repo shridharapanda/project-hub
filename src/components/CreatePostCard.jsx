@@ -99,7 +99,8 @@ export default function CreatePostCard({ onPostCreated, onCreatePost }) {
         role: user?.role || 'Computer Science Student',
         college: user?.college || 'VSSUT, Burla',
         initials: (user?.name || 'SP').slice(0, 2).toUpperCase(),
-        avatarColor: 'purple'
+        avatarColor: 'purple',
+        avatarImage: user?.avatarImage || user?.profilePicture || null
       },
       createdAt: new Date().toISOString()
     };

@@ -1,6 +1,28 @@
 import React from 'react';
 
-export default function NotificationDropdown({ notifications, onClose, onMarkAllRead, onAction }) {
+export default function NotificationDropdown({
+  notifications = [],
+  onClose,
+  onMarkAllRead,
+  onAction,
+  onAccept,
+  onDismiss
+}) {
+  const handleAccept = (n) => {
+    if (onAccept) {
+      onAccept(n.id, n.fromUser || n.title);
+    } else if (onAction) {
+      onAction(n.id, 'accept');
+    }
+  };
+
+  const handleDismiss = (n) => {
+    if (onDismiss) {
+      onDismiss(n.id);
+    } else if (onAction) {
+      onAction(n.id, 'dismiss');
+    }
+  };
   return (
     <div className="notification-panel show">
       <div className="notification-header">
@@ -33,17 +55,19 @@ export default function NotificationDropdown({ notifications, onClose, onMarkAll
                 <p>{n.description}</p>
                 <small>{n.time}</small>
 
-                {n.action === 'connect' && !n.read && (
-                  <div className="notif-actions">
+                {(n.action === 'connect' || n.action === 'collab') && !n.read && (
+                  <div className="notif-actions" style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                     <button
+                      type="button"
                       className="primary-btn-sm notif-btn"
-                      onClick={() => onAction(n.id, 'accept')}
+                      onClick={() => handleAccept(n)}
                     >
-                      Connect
+                      {n.action === 'collab' ? 'Accept Request' : 'Connect'}
                     </button>
                     <button
+                      type="button"
                       className="secondary-btn-sm notif-btn"
-                      onClick={() => onAction(n.id, 'dismiss')}
+                      onClick={() => handleDismiss(n)}
                     >
                       Dismiss
                     </button>

@@ -2661,3 +2661,8 @@ a {
     background: #0c1226 !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
 }
+
+[data-theme="dark"] .notification-dot,
+[data-theme="dark"] #notificationBtn .notification-dot {
+    border-color: #0b1020 !important;
+}

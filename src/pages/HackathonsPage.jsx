@@ -8,7 +8,14 @@ export default function HackathonsPage() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [formatFilter, setFormatFilter] = useState('all');
-  const [savedEvents, setSavedEvents] = useState({});
+  const [savedEvents, setSavedEvents] = useState(() => {
+    try {
+      const stored = localStorage.getItem('ph_saved_hackathons');
+      return stored ? JSON.parse(stored) : {};
+    } catch (e) {
+      return {};
+    }
+  });
   const [toastMessage, setToastMessage] = useState('');
 
   // Add Event Modal
@@ -45,11 +52,15 @@ export default function HackathonsPage() {
   };
 
   const handleToggleSave = (eventId, eventTitle) => {
-    const isSaved = savedEvents[eventId];
-    setSavedEvents(prev => ({
-      ...prev,
+    const isSaved = Boolean(savedEvents[eventId]);
+    const updated = {
+      ...savedEvents,
       [eventId]: !isSaved
-    }));
+    };
+    setSavedEvents(updated);
+    try {
+      localStorage.setItem('ph_saved_hackathons', JSON.stringify(updated));
+    } catch (e) {}
 
     if (!isSaved) {
       showToast(`Saved "${eventTitle}" to your events!`);

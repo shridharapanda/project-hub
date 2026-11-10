@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAuth } from '../context/AuthContext';
 
 export default function ProjectCard({
   project,
@@ -10,6 +11,16 @@ export default function ProjectCard({
   onOpenCollaborate,
   onCollaborateClick
 }) {
+  const { user } = useAuth();
+  const userEmail = user?.email?.toLowerCase().trim();
+
+  // Multi-user like check: checks if current account email is in project's likedBy list
+  const isLikedByMe = Boolean(
+    userEmail && Array.isArray(project.likedBy)
+      ? project.likedBy.includes(userEmail)
+      : project.liked
+  );
+
   const author = project.author || {
     name: "Student Builder",
     role: "Developer",
@@ -58,8 +69,16 @@ export default function ProjectCard({
     >
       <div className="project-header">
         <div className="user">
-          <div className={`project-avatar ${author.avatarColor || 'purple'}`}>
-            {author.initials || (author.name ? author.name.slice(0, 2).toUpperCase() : 'SB')}
+          <div className={`project-avatar ${author.avatarColor || 'purple'}`} style={{ overflow: 'hidden' }}>
+            {author.avatarImage ? (
+              <img
+                src={author.avatarImage}
+                alt={author.name}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              author.initials || (author.name ? author.name.slice(0, 2).toUpperCase() : 'SB')
+            )}
           </div>
           <div>
             <h4>{author.name}</h4>
@@ -100,17 +119,17 @@ export default function ProjectCard({
           {/* Like Button */}
           <button
             type="button"
-            className={project.liked ? 'liked' : ''}
+            className={isLikedByMe ? 'liked' : ''}
             onClick={handleLikeClick}
-            title={project.liked ? 'Unlike project' : 'Like project'}
+            title={isLikedByMe ? 'Unlike project' : 'Like project'}
             style={{
               transition: 'all 0.15s ease',
-              transform: project.liked ? 'scale(1.05)' : 'none'
+              transform: isLikedByMe ? 'scale(1.05)' : 'none'
             }}
           >
             <i
-              className={project.liked ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}
-              style={{ color: project.liked ? 'var(--red, #e11d48)' : 'inherit' }}
+              className={isLikedByMe ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}
+              style={{ color: isLikedByMe ? 'var(--red, #e11d48)' : 'inherit' }}
             ></i>{' '}
             {project.likes || 0}
           </button>

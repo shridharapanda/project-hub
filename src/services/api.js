@@ -147,22 +147,48 @@ export const api = {
     return { success: true, project: newProject };
   },
 
-  likeProject(projectId) {
+  likeProject(projectId, userEmail = 'default_user') {
     const current = getStorage("ph_projects", initialProjects);
+    let action = 'liked';
+    let targetProject = null;
+    const normEmail = (userEmail || 'default_user').toLowerCase().trim();
+
     const updated = current.map(p => {
       const id = p.id || p._id;
       if (id === projectId) {
-        const currentlyLiked = Boolean(p.liked);
-        return {
-          ...p,
-          liked: !currentlyLiked,
-          likes: currentlyLiked ? Math.max(0, (p.likes || 1) - 1) : (p.likes || 0) + 1
-        };
+        targetProject = p;
+        const likedBy = Array.isArray(p.likedBy)
+          ? [...p.likedBy]
+          : (p.liked ? ['default_user'] : []);
+        const idx = likedBy.indexOf(normEmail);
+
+        if (idx > -1) {
+          // Unlike
+          likedBy.splice(idx, 1);
+          action = 'unliked';
+          return {
+            ...p,
+            likedBy,
+            likes: Math.max(0, (p.likes || 1) - 1),
+            liked: false
+          };
+        } else {
+          // Like
+          likedBy.push(normEmail);
+          action = 'liked';
+          return {
+            ...p,
+            likedBy,
+            likes: (p.likes || 0) + 1,
+            liked: true
+          };
+        }
       }
       return p;
     });
+
     setStorage("ph_projects", updated);
-    return updated;
+    return { updatedProjects: updated, action, project: targetProject };
   },
 
   addComment(projectId, comment) {

@@ -1,14 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import { api } from '../services/api';
 
 export default function MembersPage() {
+  const { user } = useAuth();
+  const { addNotification } = useNotifications();
+
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedRole, setSelectedRole] = useState('All');
   const [availabilityFilter, setAvailabilityFilter] = useState('all');
-  const [connectedMap, setConnectedMap] = useState({});
+  const [connectedMap, setConnectedMap] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ph_connected_members');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
   const [toastMessage, setToastMessage] = useState('');
 
   // Create Profile modal
@@ -42,14 +54,25 @@ export default function MembersPage() {
   };
 
   const handleConnect = (member) => {
-    const isCurrentlyConnected = connectedMap[member.id];
-    setConnectedMap(prev => ({
-      ...prev,
+    const isCurrentlyConnected = Boolean(connectedMap[member.id]);
+    const updated = {
+      ...connectedMap,
       [member.id]: !isCurrentlyConnected
-    }));
+    };
+    setConnectedMap(updated);
+    try {
+      localStorage.setItem('ph_connected_members', JSON.stringify(updated));
+    } catch (e) {}
 
     if (!isCurrentlyConnected) {
       showToast(`Connection request sent to ${member.name}!`);
+      addNotification({
+        icon: 'fa-user-plus',
+        title: 'Connection Request Sent',
+        description: `You sent a connection request to ${member.name}.`,
+        action: 'connect',
+        fromUser: member.name
+      });
     } else {
       showToast(`Disconnected from ${member.name}.`);
     }

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import { api } from '../services/api';
 import ProjectCard from '../components/ProjectCard';
 import CreateProjectModal from '../components/CreateProjectModal';
@@ -8,6 +10,10 @@ import CollaborateModal from '../components/CollaborateModal';
 import CommentModal from '../components/CommentModal';
 
 export default function ProjectsPage({ initialSearch = '' }) {
+  const { user } = useAuth();
+  const { addNotification } = useNotifications();
+  const navigate = useNavigate();
+
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(initialSearch);
@@ -40,22 +46,22 @@ export default function ProjectsPage({ initialSearch = '' }) {
   };
 
   const handleLike = (projectId) => {
-    setProjects(prevProjects => {
-      const updated = prevProjects.map(p => {
-        const id = p.id || p._id;
-        if (id === projectId) {
-          const currentlyLiked = Boolean(p.liked);
-          return {
-            ...p,
-            liked: !currentlyLiked,
-            likes: currentlyLiked ? Math.max(0, (p.likes || 1) - 1) : (p.likes || 0) + 1
-          };
-        }
-        return p;
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    const { updatedProjects, action, project } = api.likeProject(projectId, user.email);
+    setProjects(updatedProjects);
+
+    if (action === 'liked') {
+      addNotification({
+        icon: 'fa-heart',
+        title: 'Project Liked',
+        description: `You liked "${project?.title || 'a project'}".`,
+        fromUser: user.name
       });
-      api.saveProjects(updated);
-      return updated;
-    });
+    }
   };
 
   const handleAddComment = (projectId, comment) => {
@@ -82,10 +88,24 @@ export default function ProjectsPage({ initialSearch = '' }) {
         comments: [...(prev.comments || []), comment]
       };
     });
+
+    addNotification({
+      icon: 'fa-comment',
+      title: 'New Comment Added',
+      description: `Comment posted on "${commentProject?.title || 'project'}".`,
+      fromUser: user?.name
+    });
   };
 
   const handleCollaborateSubmit = (projectId, collabData) => {
     api.submitCollaboration(projectId, collabData);
+    addNotification({
+      icon: 'fa-user-plus',
+      title: 'Collaboration Request Sent',
+      description: `Request sent to join "${collaborateProject?.title || 'project'}" as ${collabData.role}.`,
+      action: 'collab',
+      fromUser: user?.name
+    });
   };
 
   const categories = [

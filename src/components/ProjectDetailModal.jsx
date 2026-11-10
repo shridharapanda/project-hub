@@ -33,14 +33,22 @@ export default function ProjectDetailModal({ project, isOpen, onClose, onCollabo
           {project.description}
         </p>
 
-        {project.creator && (
+        {(project.author || project.creator) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '16px' }}>
-            <div className="project-avatar" style={{ width: '36px', height: '36px', fontSize: '13px' }}>
-              {project.creator.avatar || (project.creator.name ? project.creator.name.slice(0, 2).toUpperCase() : 'PH')}
+            <div className="project-avatar" style={{ width: '36px', height: '36px', fontSize: '13px', overflow: 'hidden' }}>
+              {(project.author?.avatarImage || project.creator?.avatarImage) ? (
+                <img
+                  src={project.author?.avatarImage || project.creator?.avatarImage}
+                  alt={project.author?.name || project.creator?.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                project.author?.initials || project.creator?.avatar || (project.author?.name || project.creator?.name || 'PH').slice(0, 2).toUpperCase()
+              )}
             </div>
             <div>
-              <strong style={{ fontSize: '14px', display: 'block' }}>{project.creator.name}</strong>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{project.creator.college || 'Builder'}</span>
+              <strong style={{ fontSize: '14px', display: 'block' }}>{project.author?.name || project.creator?.name}</strong>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{project.author?.college || project.creator?.college || 'Builder'}</span>
             </div>
           </div>
         )}

@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useNotifications } from '../context/NotificationContext';
 import NotificationDropdown from './NotificationDropdown';
 import ProfileModal from './ProfileModal';
 
 export default function Navbar({
-  notifications = [],
+  notifications: propNotifications,
   onMarkAllRead,
   onNotificationAction,
   searchQuery: propSearchQuery = '',
@@ -14,6 +15,7 @@ export default function Navbar({
 }) {
   const { user, logout, isAuthenticated } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const notifContext = useNotifications();
   const navigate = useNavigate();
 
   const [showNotifications, setShowNotifications] = useState(false);
@@ -21,7 +23,8 @@ export default function Navbar({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(propSearchQuery);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const activeNotifications = propNotifications || notifContext?.notifications || [];
+  const unreadCount = notifContext?.unreadCount ?? activeNotifications.filter(n => !n.read).length;
 
   const initials = (user?.name || 'SP')
     .split(' ')
@@ -113,9 +116,11 @@ export default function Navbar({
 
             {showNotifications && (
               <NotificationDropdown
-                notifications={notifications}
+                notifications={activeNotifications}
                 onClose={() => setShowNotifications(false)}
-                onMarkAllRead={onMarkAllRead}
+                onMarkAllRead={onMarkAllRead || notifContext?.markAllRead}
+                onAccept={(id, from) => notifContext?.acceptRequest(id, from)}
+                onDismiss={(id) => notifContext?.removeNotification(id)}
                 onAction={onNotificationAction}
               />
             )}

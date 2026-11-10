@@ -108,7 +108,8 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
           role: user?.role || 'Computer Science Engineering',
           college: user?.college || 'VSSUT, Burla',
           initials: (user?.name || 'SP').slice(0, 2).toUpperCase(),
-          avatarColor: 'purple'
+          avatarColor: 'purple',
+          avatarImage: user?.avatarImage || user?.profilePicture || null
         }
       };
 
