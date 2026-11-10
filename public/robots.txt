@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://shridharapanda-blip.github.io/project-hub/sitemap.xml
+Sitemap: https://shridharapanda.github.io/project-hub/sitemap.xml
