@@ -4,26 +4,33 @@ import { api } from '../services/api';
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
+  // Initialize user and token ONLY if there is a real saved session
   const [user, setUser] = useState(() => {
     try {
+      const token = localStorage.getItem('token');
+      // If no token or old legacy default token, user is unauthenticated by default
+      if (!token || token === 'demo_token') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('ph_current_user');
+        return null;
+      }
       const stored = localStorage.getItem('ph_current_user');
-      return stored ? JSON.parse(stored) : {
-        name: "Shridhara Panda",
-        email: "shridhara.panda@vssut.ac.in",
-        role: "Computer Science Engineering",
-        college: "VSSUT, Burla",
-        projectsCount: 12,
-        connectionsCount: 86,
-        skillsCount: 24,
-        skills: ["JavaScript", "HTML", "CSS", "C++", "DSA", "React"]
-      };
+      return stored ? JSON.parse(stored) : null;
     } catch (e) {
       return null;
     }
   });
 
   const [token, setToken] = useState(() => {
-    return localStorage.getItem('token') || 'demo_token';
+    try {
+      const saved = localStorage.getItem('token');
+      if (!saved || saved === 'demo_token') {
+        return null;
+      }
+      return saved;
+    } catch (e) {
+      return null;
+    }
   });
 
   useEffect(() => {
@@ -53,14 +60,56 @@ export function AuthProvider({ children }) {
       projectsCount: 12,
       connectionsCount: 86,
       skillsCount: 24,
-      skills: ["JavaScript", "React", "Node.js", "C++"]
+      skills: ["JavaScript", "React", "Node.js", "C++"],
+      provider: "email"
     };
     setUser(loggedUser);
     return res;
   };
 
-  const quickDemoLogin = async () => {
-    return login("alex.chen@vssut.ac.in", "Password123!");
+  const demoLogin = async () => {
+    const demoUser = {
+      name: "Shridhara Panda",
+      email: "shridhara.panda@vssut.ac.in",
+      role: "Computer Science Engineering",
+      college: "VSSUT, Burla",
+      avatar: "SP",
+      projectsCount: 12,
+      connectionsCount: 86,
+      skillsCount: 24,
+      skills: ["JavaScript", "HTML", "CSS", "C++", "DSA", "React"],
+      provider: "demo"
+    };
+    const demoToken = 'session_' + Date.now();
+    setToken(demoToken);
+    setUser(demoUser);
+    localStorage.setItem('token', demoToken);
+    localStorage.setItem('ph_current_user', JSON.stringify(demoUser));
+    return { token: demoToken, user: demoUser };
+  };
+
+  const loginWithGoogle = async (customGoogleProfile = null) => {
+    // Generates a Google-authenticated student account
+    const googleUser = {
+      name: customGoogleProfile?.name || "Shridhara Panda",
+      email: customGoogleProfile?.email || "shridhara.panda@gmail.com",
+      role: "Computer Science Student",
+      college: "VSSUT, Burla",
+      avatar: (customGoogleProfile?.name || "SP").slice(0, 2).toUpperCase(),
+      profilePicture: customGoogleProfile?.picture || null,
+      projectsCount: 12,
+      connectionsCount: 86,
+      skillsCount: 24,
+      skills: ["React", "JavaScript", "Python", "Node.js", "C++"],
+      provider: "google"
+    };
+
+    const googleToken = 'google_jwt_' + Date.now();
+    setToken(googleToken);
+    setUser(googleUser);
+    localStorage.setItem('token', googleToken);
+    localStorage.setItem('ph_current_user', JSON.stringify(googleUser));
+    return { token: googleToken, user: googleUser };
   };
 
   const register = async (name, email, password) => {
@@ -74,7 +123,8 @@ export function AuthProvider({ children }) {
       projectsCount: 1,
       connectionsCount: 5,
       skillsCount: 4,
-      skills: ["JavaScript", "HTML/CSS"]
+      skills: ["JavaScript", "HTML/CSS"],
+      provider: "email"
     };
     setUser(newUser);
     return res;
@@ -103,7 +153,9 @@ export function AuthProvider({ children }) {
         token,
         isAuthenticated,
         login,
-        quickDemoLogin,
+        demoLogin,
+        quickDemoLogin: demoLogin,
+        loginWithGoogle,
         register,
         logout,
         updateProfile
