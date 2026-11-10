@@ -14,8 +14,22 @@ export default function MessagesPage() {
   const [newMessageText, setNewMessageText] = useState('');
   const [search, setSearch] = useState('');
   const [showMobileChat, setShowMobileChat] = useState(false);
+  const [attachedImage, setAttachedImage] = useState(null);
 
   const messagesEndRef = useRef(null);
+  const attachmentInputRef = useRef(null);
+
+  const handleAttachmentFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAttachedImage(reader.result);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
 
   useEffect(() => {
     document.body.classList.add('messages-active');
@@ -68,13 +82,14 @@ export default function MessagesPage() {
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (!newMessageText.trim() || !activeChatId) return;
+    if ((!newMessageText.trim() && !attachedImage) || !activeChatId) return;
 
     const newMsg = {
       id: 'msg-' + Date.now(),
       sender: user?.name || 'Me',
       type: 'sent',
       text: newMessageText.trim(),
+      image: attachedImage || null,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
@@ -82,20 +97,23 @@ export default function MessagesPage() {
     const updatedMessages = [...messages, newMsg];
     setMessages(updatedMessages);
     setNewMessageText('');
+    setAttachedImage(null);
 
-    setConversations(prev =>
-      prev.map(c => {
+    setConversations(prev => {
+      const updated = prev.map(c => {
         if (c.id === activeChatId) {
           return {
             ...c,
-            lastMessage: newMsg.text,
+            lastMessage: newMsg.text || '📷 Shared an image',
             time: 'Just now',
             messages: updatedMessages
           };
         }
         return c;
-      })
-    );
+      });
+      api.saveConversations(updated);
+      return updated;
+    });
 
     // Simulate reply after 1.5 seconds if talking to another user
     setTimeout(() => {
@@ -107,8 +125,8 @@ export default function MessagesPage() {
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 
-      setConversations(prev =>
-        prev.map(c => {
+      setConversations(prev => {
+        const updated = prev.map(c => {
           if (c.id === activeChatId) {
             return {
               ...c,
@@ -118,8 +136,10 @@ export default function MessagesPage() {
             };
           }
           return c;
-        })
-      );
+        });
+        api.saveConversations(updated);
+        return updated;
+      });
     }, 1500);
   };
 
@@ -324,7 +344,14 @@ export default function MessagesPage() {
                   )}
 
                   <div className="message-content">
-                    <p>{m.text}</p>
+                    {m.image && (
+                      <img
+                        src={m.image}
+                        alt="attachment"
+                        style={{ maxWidth: '240px', maxHeight: '180px', borderRadius: '8px', marginBottom: '6px', display: 'block', objectFit: 'cover' }}
+                      />
+                    )}
+                    {m.text && <p>{m.text}</p>}
                     <span>{m.time}</span>
                   </div>
                 </div>
@@ -332,20 +359,44 @@ export default function MessagesPage() {
               <div ref={messagesEndRef} />
             </div>
 
+            {/* ATTACHMENT PREVIEW IF ANY */}
+            {attachedImage && (
+              <div style={{ padding: '8px 16px', background: 'var(--card-solid)', borderTop: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <img src={attachedImage} alt="Attachment preview" style={{ height: '48px', width: '48px', objectFit: 'cover', borderRadius: '6px' }} />
+                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Image ready to send</span>
+                <button
+                  type="button"
+                  onClick={() => setAttachedImage(null)}
+                  style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '16px' }}
+                  title="Remove attachment"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
             {/* MESSAGE INPUT */}
             <form className="message-form" onSubmit={handleSendMessage}>
+              <input
+                type="file"
+                ref={attachmentInputRef}
+                onChange={handleAttachmentFileChange}
+                accept="image/*"
+                style={{ display: 'none' }}
+              />
+
               <button
                 type="button"
                 className="icon-btn"
-                title="Attach file"
-                onClick={() => alert('Attachment upload dialog')}
+                title="Attach image"
+                onClick={() => attachmentInputRef.current?.click()}
               >
                 <i className="fa-solid fa-paperclip"></i>
               </button>
 
               <input
                 type="text"
-                placeholder="Write a message..."
+                placeholder={attachedImage ? "Add a message (optional)..." : "Write a message..."}
                 value={newMessageText}
                 onChange={(e) => setNewMessageText(e.target.value)}
               />

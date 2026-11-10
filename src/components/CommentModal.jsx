@@ -11,12 +11,14 @@ export default function CommentModal({ project, isOpen, onClose, onAddComment })
     e.preventDefault();
     if (!commentText.trim()) return;
 
-    onAddComment(project.id, {
-      id: Date.now(),
-      author: user?.name || "Student Builder",
-      text: commentText.trim(),
-      time: "Just now"
-    });
+    if (onAddComment) {
+      onAddComment(project.id || project._id, {
+        id: 'comment-' + Date.now(),
+        author: user?.name || "Student Builder",
+        text: commentText.trim(),
+        time: "Just now"
+      });
+    }
 
     setCommentText('');
   };

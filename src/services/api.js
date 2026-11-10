@@ -114,6 +114,101 @@ export const api = {
     setStorage("ph_projects", projects);
   },
 
+  async createProject(projectData) {
+    const current = getStorage("ph_projects", initialProjects);
+    const newProject = {
+      id: "proj-" + Date.now(),
+      title: projectData.title,
+      category: projectData.category || "web",
+      description: projectData.description,
+      skills: Array.isArray(projectData.skills)
+        ? projectData.skills
+        : (projectData.skills || "").split(",").map(s => s.trim()).filter(Boolean),
+      requiredMembers: parseInt(projectData.requiredMembers, 10) || 2,
+      githubLink: projectData.githubLink || "",
+      demoLink: projectData.demoLink || "",
+      mediaUrl: projectData.mediaUrl || "",
+      likes: 0,
+      liked: false,
+      comments: [],
+      badge: projectData.badge || "Student Project",
+      author: projectData.author || {
+        name: "Shridhara Panda",
+        role: "Computer Science Engineering",
+        college: "VSSUT, Burla",
+        avatarColor: "purple",
+        initials: "SP"
+      },
+      createdAt: new Date().toISOString()
+    };
+
+    const updated = [newProject, ...current];
+    setStorage("ph_projects", updated);
+    return { success: true, project: newProject };
+  },
+
+  likeProject(projectId) {
+    const current = getStorage("ph_projects", initialProjects);
+    const updated = current.map(p => {
+      const id = p.id || p._id;
+      if (id === projectId) {
+        const currentlyLiked = Boolean(p.liked);
+        return {
+          ...p,
+          liked: !currentlyLiked,
+          likes: currentlyLiked ? Math.max(0, (p.likes || 1) - 1) : (p.likes || 0) + 1
+        };
+      }
+      return p;
+    });
+    setStorage("ph_projects", updated);
+    return updated;
+  },
+
+  addComment(projectId, comment) {
+    const current = getStorage("ph_projects", initialProjects);
+    const updated = current.map(p => {
+      const id = p.id || p._id;
+      if (id === projectId) {
+        const comments = p.comments || [];
+        return {
+          ...p,
+          comments: [...comments, comment]
+        };
+      }
+      return p;
+    });
+    setStorage("ph_projects", updated);
+    return updated;
+  },
+
+  submitCollaboration(projectId, collabData) {
+    const collabs = getStorage("ph_collab_requests", []);
+    const newCollab = {
+      id: "collab-" + Date.now(),
+      projectId,
+      ...collabData,
+      createdAt: new Date().toISOString()
+    };
+    collabs.push(newCollab);
+    setStorage("ph_collab_requests", collabs);
+
+    // Also push a real notification into notifications storage
+    const notifications = getStorage("ph_notifications", initialNotifications);
+    notifications.unshift({
+      id: "notif-" + Date.now(),
+      icon: "fa-user-plus",
+      title: "New Collaboration Request",
+      description: `New application for "${collabData.role || 'Contributor'}" submitted.`,
+      time: "Just now",
+      read: false,
+      action: "connect"
+    });
+    setStorage("ph_notifications", notifications);
+
+    return newCollab;
+  },
+
   // Members
   async getMembers() {
     try {

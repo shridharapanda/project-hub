@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import ProjectCard from '../components/ProjectCard';
 import CreateProjectModal from '../components/CreateProjectModal';
@@ -36,6 +37,55 @@ export default function ProjectsPage({ initialSearch = '' }) {
 
   const handleProjectCreated = (newProject) => {
     setProjects(prev => [newProject, ...prev]);
+  };
+
+  const handleLike = (projectId) => {
+    setProjects(prevProjects => {
+      const updated = prevProjects.map(p => {
+        const id = p.id || p._id;
+        if (id === projectId) {
+          const currentlyLiked = Boolean(p.liked);
+          return {
+            ...p,
+            liked: !currentlyLiked,
+            likes: currentlyLiked ? Math.max(0, (p.likes || 1) - 1) : (p.likes || 0) + 1
+          };
+        }
+        return p;
+      });
+      api.saveProjects(updated);
+      return updated;
+    });
+  };
+
+  const handleAddComment = (projectId, comment) => {
+    setProjects(prevProjects => {
+      const updated = prevProjects.map(p => {
+        const id = p.id || p._id;
+        if (id === projectId) {
+          const comments = p.comments || [];
+          return {
+            ...p,
+            comments: [...comments, comment]
+          };
+        }
+        return p;
+      });
+      api.saveProjects(updated);
+      return updated;
+    });
+
+    setCommentProject(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        comments: [...(prev.comments || []), comment]
+      };
+    });
+  };
+
+  const handleCollaborateSubmit = (projectId, collabData) => {
+    api.submitCollaboration(projectId, collabData);
   };
 
   const categories = [
@@ -99,9 +149,9 @@ export default function ProjectsPage({ initialSearch = '' }) {
             >
               ＋ Launch a project
             </button>
-            <a className="secondary-btn" href="/members">
+            <Link className="secondary-btn" to="/members">
               Find collaborators ↗
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -195,9 +245,13 @@ export default function ProjectsPage({ initialSearch = '' }) {
             <ProjectCard
               key={project._id || project.id}
               project={project}
+              onLike={handleLike}
               onCommentClick={(p) => setCommentProject(p)}
+              onOpenComments={(p) => setCommentProject(p)}
               onCollaborateClick={(p) => setCollaborateProject(p)}
+              onOpenCollaborate={(p) => setCollaborateProject(p)}
               onViewProject={(p) => setDetailProject(p)}
+              onOpenDetail={(p) => setDetailProject(p)}
             />
           ))
         )}
@@ -242,12 +296,14 @@ export default function ProjectsPage({ initialSearch = '' }) {
         project={collaborateProject}
         isOpen={Boolean(collaborateProject)}
         onClose={() => setCollaborateProject(null)}
+        onSubmitRequest={handleCollaborateSubmit}
       />
 
       <CommentModal
         project={commentProject}
         isOpen={Boolean(commentProject)}
         onClose={() => setCommentProject(null)}
+        onAddComment={handleAddComment}
       />
     </main>
   );

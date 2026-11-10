@@ -13,10 +13,29 @@ import HackathonsPage from './pages/HackathonsPage';
 import MessagesPage from './pages/MessagesPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import { api } from './services/api';
 
 function AppLayout() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState(() => api.getNotifications());
   const location = useLocation();
+
+  const handleMarkAllRead = () => {
+    const updated = notifications.map(n => ({ ...n, read: true }));
+    setNotifications(updated);
+    api.saveNotifications(updated);
+  };
+
+  const handleNotificationAction = (notifId, action) => {
+    const updated = notifications.map(n => {
+      if (n.id === notifId) {
+        return { ...n, read: true };
+      }
+      return n;
+    });
+    setNotifications(updated);
+    api.saveNotifications(updated);
+  };
 
   // Pages that don't need the standard top navbar
   const hideNavbar = ['/messages', '/login', '/register'].includes(location.pathname);
@@ -28,6 +47,9 @@ function AppLayout() {
         <Navbar
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          notifications={notifications}
+          onMarkAllRead={handleMarkAllRead}
+          onNotificationAction={handleNotificationAction}
         />
       )}
 

@@ -9,7 +9,9 @@ export default function CollaborateModal({ project, isOpen, onClose, onSubmitReq
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmitRequest(project.id, { role, message });
+    if (onSubmitRequest) {
+      onSubmitRequest(project.id || project._id, { role, message });
+    }
     setSubmitted(true);
     setTimeout(() => {
       setSubmitted(false);

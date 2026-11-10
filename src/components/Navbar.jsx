@@ -5,7 +5,13 @@ import { useTheme } from '../context/ThemeContext';
 import NotificationDropdown from './NotificationDropdown';
 import ProfileModal from './ProfileModal';
 
-export default function Navbar({ notifications = [], onMarkAllRead, onNotificationAction }) {
+export default function Navbar({
+  notifications = [],
+  onMarkAllRead,
+  onNotificationAction,
+  searchQuery: propSearchQuery = '',
+  onSearchChange
+}) {
   const { user, logout, isAuthenticated } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -13,7 +19,7 @@ export default function Navbar({ notifications = [], onMarkAllRead, onNotificati
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(propSearchQuery);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -23,6 +29,12 @@ export default function Navbar({ notifications = [], onMarkAllRead, onNotificati
     .join('')
     .toUpperCase()
     .slice(0, 2);
+
+  const handleSearchInputChange = (e) => {
+    const val = e.target.value;
+    setSearchQuery(val);
+    if (onSearchChange) onSearchChange(val);
+  };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -50,7 +62,7 @@ export default function Navbar({ notifications = [], onMarkAllRead, onNotificati
             id="searchInput"
             placeholder="Search projects, skills..."
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={handleSearchInputChange}
           />
         </form>
 

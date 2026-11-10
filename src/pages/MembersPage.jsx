@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 
 export default function MembersPage() {
@@ -133,9 +134,9 @@ export default function MembersPage() {
             >
               ＋ Create your profile
             </button>
-            <a className="secondary-btn" href="/projects">
+            <Link className="secondary-btn" to="/projects">
               Explore projects ↗
-            </a>
+            </Link>
           </div>
         </div>
 

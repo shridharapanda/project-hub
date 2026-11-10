@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 
 export default function HackathonsPage() {
@@ -143,9 +144,9 @@ export default function HackathonsPage() {
             >
               ＋ Add an event
             </button>
-            <a className="secondary-btn" href="/members">
+            <Link className="secondary-btn" to="/members">
               Find a team ↗
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -284,9 +285,9 @@ export default function HackathonsPage() {
             Browse members, share your skills, and find people who want to build the same kind of thing.
           </p>
         </div>
-        <a className="primary-btn" href="/members">
+        <Link className="primary-btn" to="/members">
           Find teammates ↗
-        </a>
+        </Link>
       </section>
 
       <footer className="footer" style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-secondary)', fontSize: '13px' }}>

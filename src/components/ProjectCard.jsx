@@ -1,6 +1,15 @@
 import React from 'react';
 
-export default function ProjectCard({ project, onLike, onOpenComments, onOpenDetail, onOpenCollaborate }) {
+export default function ProjectCard({
+  project,
+  onLike,
+  onOpenComments,
+  onCommentClick,
+  onOpenDetail,
+  onViewProject,
+  onOpenCollaborate,
+  onCollaborateClick
+}) {
   const author = project.author || {
     name: "Student Builder",
     role: "Developer",
@@ -9,12 +18,48 @@ export default function ProjectCard({ project, onLike, onOpenComments, onOpenDet
     avatarColor: "purple"
   };
 
+  const handleLikeClick = (e) => {
+    e.stopPropagation();
+    if (onLike) {
+      onLike(project.id || project._id);
+    }
+  };
+
+  const handleCommentClick = (e) => {
+    e.stopPropagation();
+    const handler = onOpenComments || onCommentClick;
+    if (handler) {
+      handler(project);
+    }
+  };
+
+  const handleCollaborateClick = (e) => {
+    e.stopPropagation();
+    const handler = onOpenCollaborate || onCollaborateClick;
+    if (handler) {
+      handler(project);
+    }
+  };
+
+  const handleDetailClick = (e) => {
+    e.stopPropagation();
+    const handler = onOpenDetail || onViewProject;
+    if (handler) {
+      handler(project);
+    }
+  };
+
   return (
-    <article className="project-card card" data-category={project.category}>
+    <article
+      className="project-card card"
+      data-category={project.category}
+      style={{ cursor: 'pointer' }}
+      onClick={handleDetailClick}
+    >
       <div className="project-header">
         <div className="user">
           <div className={`project-avatar ${author.avatarColor || 'purple'}`}>
-            {author.initials || author.name.slice(0, 2).toUpperCase()}
+            {author.initials || (author.name ? author.name.slice(0, 2).toUpperCase() : 'SB')}
           </div>
           <div>
             <h4>{author.name}</h4>
@@ -32,17 +77,17 @@ export default function ProjectCard({ project, onLike, onOpenComments, onOpenDet
         <p>{project.description}</p>
 
         {project.mediaUrl && (
-          <div style={{ marginTop: '12px' }}>
+          <div style={{ marginTop: '14px', overflow: 'hidden', borderRadius: '12px' }}>
             <img
               src={project.mediaUrl}
               alt={project.title}
-              style={{ width: '100%', maxHeight: '280px', objectFit: 'cover', borderRadius: '12px' }}
+              style={{ width: '100%', maxHeight: '320px', objectFit: 'cover', display: 'block' }}
             />
           </div>
         )}
 
         {project.tags && project.tags.length > 0 && (
-          <div className="tags">
+          <div className="tags" style={{ marginTop: '12px' }}>
             {project.tags.map((tag, idx) => (
               <span key={idx}>{tag}</span>
             ))}
@@ -52,38 +97,49 @@ export default function ProjectCard({ project, onLike, onOpenComments, onOpenDet
 
       <div className="project-bottom">
         <div className="actions">
+          {/* Like Button */}
           <button
             type="button"
             className={project.liked ? 'liked' : ''}
-            onClick={() => onLike(project.id)}
-            title="Like project"
+            onClick={handleLikeClick}
+            title={project.liked ? 'Unlike project' : 'Like project'}
+            style={{
+              transition: 'all 0.15s ease',
+              transform: project.liked ? 'scale(1.05)' : 'none'
+            }}
           >
-            <i className={project.liked ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}></i>{' '}
+            <i
+              className={project.liked ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}
+              style={{ color: project.liked ? 'var(--red, #e11d48)' : 'inherit' }}
+            ></i>{' '}
             {project.likes || 0}
           </button>
 
+          {/* Comment Button */}
           <button
             type="button"
-            onClick={() => onOpenComments(project)}
-            title="View comments"
+            onClick={handleCommentClick}
+            title="View & add comments"
           >
             <i className="fa-regular fa-comment"></i>{' '}
             {project.comments ? project.comments.length : 0}
           </button>
 
+          {/* Join / Collaborate Button */}
           <button
             type="button"
-            onClick={() => onOpenCollaborate(project)}
-            title="Join team"
+            onClick={handleCollaborateClick}
+            title="Request to join team"
           >
             <i className="fa-solid fa-user-plus"></i> Join
           </button>
         </div>
 
+        {/* View Details Button */}
         <button
           type="button"
           className="view-project"
-          onClick={() => onOpenDetail(project)}
+          onClick={handleDetailClick}
         >
           View details →
         </button>
