@@ -21,3 +21,7 @@ desktop.ini
 # IDE & Editor files
 .vscode/
 .idea/
+
+# Build output
+dist/
+dist-ssr/

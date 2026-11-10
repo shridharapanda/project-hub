@@ -1,0 +1,15 @@
+@import './style.css';
+@import './messages.css';
+
+/* React specific resets and smooth transitions */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure link colors inherit properly */
+a {
+  color: inherit;
+  text-decoration: none;
+}
