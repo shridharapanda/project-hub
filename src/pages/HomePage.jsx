@@ -11,6 +11,7 @@ import ProjectDetailModal from '../components/ProjectDetailModal';
 import CreateProjectModal from '../components/CreateProjectModal';
 import ProfileModal from '../components/ProfileModal';
 import VSSUTCampusModal from '../components/VSSUTCampusModal';
+import { featuredColleges } from '../data/collegesData';
 
 export default function HomePage({ searchQuery = '' }) {
   const { user } = useAuth();
@@ -25,6 +26,8 @@ export default function HomePage({ searchQuery = '' }) {
   const [sponsoredTab, setSponsoredTab] = useState('campus'); // 'campus' | 'sponsored'
   const [isCampusModalOpen, setIsCampusModalOpen] = useState(false);
   const [campusFilter, setCampusFilter] = useState('');
+  const [currentCollegeIndex, setCurrentCollegeIndex] = useState(0);
+  const [isSpotlightPaused, setIsSpotlightPaused] = useState(false);
 
   // Modals state
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
@@ -43,6 +46,15 @@ export default function HomePage({ searchQuery = '' }) {
       window.removeEventListener('storage', handleSync);
     };
   }, []);
+
+  // 10-second auto-rotation for college sponsorship & campus showcase
+  useEffect(() => {
+    if (isSpotlightPaused) return;
+    const timer = setInterval(() => {
+      setCurrentCollegeIndex(prev => (prev + 1) % featuredColleges.length);
+    }, 10000);
+    return () => clearInterval(timer);
+  }, [isSpotlightPaused]);
 
   const loadProjects = async () => {
     try {
@@ -182,9 +194,27 @@ export default function HomePage({ searchQuery = '' }) {
     });
   };
 
-  // Handlers for VSSUT Campus & Sponsored spotlight
-  const handleFilterVssut = () => {
-    setCampusFilter('VSSUT');
+  // Active college for the 10-second rotating sponsorship spotlight
+  const currentCollege = featuredColleges[currentCollegeIndex] || featuredColleges[0];
+
+  const handleNextCollege = (e) => {
+    e?.stopPropagation?.();
+    setCurrentCollegeIndex(prev => (prev + 1) % featuredColleges.length);
+  };
+
+  const handlePrevCollege = (e) => {
+    e?.stopPropagation?.();
+    setCurrentCollegeIndex(prev => (prev - 1 + featuredColleges.length) % featuredColleges.length);
+  };
+
+  const handleSelectCollege = (idx, e) => {
+    e?.stopPropagation?.();
+    setCurrentCollegeIndex(idx);
+  };
+
+  const handleFilterByCollege = (query) => {
+    const q = query || currentCollege.filterQuery;
+    setCampusFilter(q);
     setActiveCategory('all');
     const feedEl = document.getElementById('projects');
     if (feedEl) feedEl.scrollIntoView({ behavior: 'smooth' });
@@ -194,42 +224,22 @@ export default function HomePage({ searchQuery = '' }) {
     setCampusFilter('');
   };
 
-  const handleOpenVslvProject = () => {
-    const vslv = projects.find(p => (p.id || p._id) === 'proj-vslv') || {
-      id: 'proj-vslv',
-      title: 'VSLV-X Suborbital Rocketry & CanSat Telemetry',
-      description: "India's first indigenous student sounding rocket system with active telemetry payload, dual-deploy parachute recovery, and real-time atmospheric sensor telemetry designed at VSSUT Burla.",
-      category: 'hardware',
-      author: {
-        name: 'VSLV Space Team',
-        college: 'VSSUT, Burla',
-        course: 'Aerospace & Mechanical Engg'
+  const handleOpenSponsoredProject = (spProject) => {
+    const proj = projects.find(p => (p.id || p._id) === spProject.id) || {
+      id: spProject.id,
+      title: spProject.title,
+      description: spProject.description,
+      category: spProject.category || 'hardware',
+      author: spProject.author || {
+        name: `${currentCollege.name} Builders`,
+        college: currentCollege.name
       },
-      likes: 84,
+      likes: 45,
       comments: [],
-      skills: ['Solid Propulsion', 'Avionics', 'CanSat', 'Telemetry', 'Embedded C++'],
-      tags: ['VSSUT', 'Rocketry', 'Aerospace', 'ISRO']
+      skills: spProject.skills || ['Engineering', 'Design'],
+      tags: spProject.tags || [currentCollege.filterQuery, 'Hardware']
     };
-    setDetailProject(vslv);
-  };
-
-  const handleOpenSmartCampusProject = () => {
-    const smartHostel = projects.find(p => (p.id || p._id) === 'proj-2') || {
-      id: 'proj-2',
-      title: 'Smart Hostel Energy Monitor & Surge Protector',
-      description: 'IoT-based electrical monitoring and load balancing system for university hostels to prevent overload blackouts and monitor carbon emissions in real-time.',
-      category: 'hardware',
-      author: {
-        name: 'Priya Sahoo',
-        college: 'VSSUT, Burla',
-        course: 'Electrical Engg'
-      },
-      likes: 27,
-      comments: [],
-      skills: ['IoT', 'ESP32', 'React', 'MQTT'],
-      tags: ['VSSUT', 'IoT', 'Hardware']
-    };
-    setDetailProject(smartHostel);
+    setDetailProject(proj);
   };
 
   // Filter projects by category, search query, and campus filter
@@ -319,16 +329,72 @@ export default function HomePage({ searchQuery = '' }) {
           </button>
         </div>
 
-        {/* VSSUT Burla: Campus & Sponsored Spotlight */}
-        <div className="card sponsored reveal vssut-spotlight-card" style={{ opacity: 1, transform: 'none' }}>
-          <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        {/* Multi-College Spotlight & Grants (Auto-rotates every 10 seconds) */}
+        <div
+          className="card sponsored reveal vssut-spotlight-card"
+          style={{ opacity: 1, transform: 'none', position: 'relative', overflow: 'hidden' }}
+          onMouseEnter={() => setIsSpotlightPaused(true)}
+          onMouseLeave={() => setIsSpotlightPaused(false)}
+        >
+          {/* 10-Second Auto-rotation Progress Bar */}
+          <div
+            key={currentCollege.id + (isSpotlightPaused ? '-paused' : '-active')}
+            className={`spotlight-progress-bar ${isSpotlightPaused ? 'paused' : 'running'}`}
+            title={isSpotlightPaused ? 'Rotation paused on hover' : 'Next college sponsorship in 10 seconds'}
+          />
+
+          {/* Card Header & Controls */}
+          <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', marginTop: '2px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ fontSize: '15px' }}>🏛️</span>
-              <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700 }}>VSSUT Spotlight</h3>
+              <h3 style={{ margin: 0, fontSize: '13px', fontWeight: 700 }}>Campus Grants</h3>
             </div>
-            <span style={{ fontSize: '10px', background: 'rgba(99, 102, 241, 0.12)', color: 'var(--primary, #6366f1)', padding: '2px 7px', borderRadius: '4px', fontWeight: 700 }}>
-              Burla, Odisha
-            </span>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <button
+                type="button"
+                onClick={handlePrevCollege}
+                className="carousel-nav-btn"
+                aria-label="Previous College"
+                title="Previous College"
+              >
+                ‹
+              </button>
+              <span style={{ fontSize: '10px', background: 'rgba(99, 102, 241, 0.12)', color: 'var(--primary, #6366f1)', padding: '2px 7px', borderRadius: '4px', fontWeight: 700 }}>
+                {currentCollege.badge}
+              </span>
+              <button
+                type="button"
+                onClick={handleNextCollege}
+                className="carousel-nav-btn"
+                aria-label="Next College"
+                title="Next College (Auto-rotates every 10s)"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+
+          {/* 4 College Dots Indicator */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+            {featuredColleges.map((col, idx) => (
+              <button
+                key={col.id}
+                type="button"
+                onClick={(e) => handleSelectCollege(idx, e)}
+                style={{
+                  width: idx === currentCollegeIndex ? '18px' : '6px',
+                  height: '6px',
+                  borderRadius: '3px',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  background: idx === currentCollegeIndex ? 'var(--primary, #6366f1)' : 'var(--border, #cbd5e1)',
+                  transition: 'all 0.25s ease'
+                }}
+                title={`Switch to ${col.name} (Auto-rotates in 10s)`}
+              />
+            ))}
           </div>
 
           {/* Tab Switcher: Campus vs Sponsored */}
@@ -375,141 +441,138 @@ export default function HomePage({ searchQuery = '' }) {
             </button>
           </div>
 
-          {sponsoredTab === 'campus' ? (
-            <div className="campus-tab-content">
-              {/* Campus Real Image Container */}
-              <div
-                className="campus-photo-container"
-                onClick={() => setIsCampusModalOpen(true)}
-                style={{
-                  position: 'relative',
-                  borderRadius: '10px',
-                  overflow: 'hidden',
-                  height: '115px',
-                  cursor: 'pointer',
-                  marginBottom: '10px',
-                  border: '1px solid var(--border)'
-                }}
-                title="Click to explore VSSUT Campus & History"
-              >
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/VSSUT_Burla_Main_Building.jpg/800px-VSSUT_Burla_Main_Building.jpg"
-                  alt="VSSUT Burla Main Building"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80";
-                  }}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                />
+          {/* Animated College Content */}
+          <div key={currentCollege.id} className="spotlight-animated-content">
+            {sponsoredTab === 'campus' ? (
+              <div className="campus-tab-content">
+                {/* Campus Real Image Container */}
                 <div
+                  className="campus-photo-container"
+                  onClick={() => setIsCampusModalOpen(true)}
                   style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'linear-gradient(to top, rgba(15, 23, 42, 0.88) 0%, rgba(15, 23, 42, 0.2) 65%, transparent 100%)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'flex-end',
-                    padding: '8px 10px'
+                    position: 'relative',
+                    borderRadius: '10px',
+                    overflow: 'hidden',
+                    height: '115px',
+                    cursor: 'pointer',
+                    marginBottom: '10px',
+                    border: '1px solid var(--border)'
                   }}
+                  title={`Click to explore ${currentCollege.name} Campus & History`}
                 >
-                  <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    Estd. 1956 · UCE Burla
-                  </span>
-                  <span style={{ fontSize: '12px', color: '#ffffff', fontWeight: 700, lineHeight: 1.2 }}>
-                    Veer Surendra Sai Univ of Tech
-                  </span>
+                  <img
+                    src={currentCollege.campusImage}
+                    alt={`${currentCollege.name} Campus`}
+                    onError={(e) => {
+                      e.currentTarget.src = currentCollege.fallbackImage || "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80";
+                    }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'linear-gradient(to top, rgba(15, 23, 42, 0.88) 0%, rgba(15, 23, 42, 0.2) 65%, transparent 100%)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'flex-end',
+                      padding: '8px 10px'
+                    }}
+                  >
+                    <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      {currentCollege.estd}
+                    </span>
+                    <span style={{ fontSize: '12px', color: '#ffffff', fontWeight: 700, lineHeight: 1.2 }}>
+                      {currentCollege.name}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Campus Achievements Mini Pills */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '10px' }}>
+                  <div style={{ background: 'var(--surface-subtle, #f8fafc)', border: '1px solid var(--border)', borderRadius: '6px', padding: '6px 8px', overflow: 'hidden' }}>
+                    <div style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--primary, #6366f1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {currentCollege.stats.stat1.value}
+                    </div>
+                    <div style={{ fontSize: '9.5px', color: 'var(--muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {currentCollege.stats.stat1.label}
+                    </div>
+                  </div>
+                  <div style={{ background: 'var(--surface-subtle, #f8fafc)', border: '1px solid var(--border)', borderRadius: '6px', padding: '6px 8px', overflow: 'hidden' }}>
+                    <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#10b981', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {currentCollege.stats.stat2.value}
+                    </div>
+                    <div style={{ fontSize: '9.5px', color: 'var(--muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {currentCollege.stats.stat2.label}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Innovation highlight */}
+                <div style={{ background: 'rgba(99, 102, 241, 0.05)', border: '1px dashed var(--primary, #6366f1)', borderRadius: '8px', padding: '8px 10px', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    <span>💡</span> {currentCollege.highlightTitle}
+                  </div>
+                  <p style={{ margin: '3px 0 0', fontSize: '10.5px', color: 'var(--muted)', lineHeight: 1.35 }}>
+                    {currentCollege.highlightDesc}
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <button
+                    type="button"
+                    className="explore-sponsored-btn"
+                    style={{ width: '100%', textAlign: 'center', justifyContent: 'center', padding: '7px 10px', fontSize: '11.5px', borderRadius: '6px' }}
+                    onClick={() => handleFilterByCollege(currentCollege.filterQuery)}
+                  >
+                    🎓 View {currentCollege.name} Projects ({projects.filter(p => (p.author?.college && p.author.college.toLowerCase().includes(currentCollege.filterQuery.toLowerCase())) || (p.tags && p.tags.some(t => t.toLowerCase().includes(currentCollege.filterQuery.toLowerCase())))).length}) →
+                  </button>
+                  <button
+                    type="button"
+                    className="outline-btn"
+                    style={{ width: '100%', padding: '6px 10px', fontSize: '11px', textAlign: 'center', borderRadius: '6px' }}
+                    onClick={() => setIsCampusModalOpen(true)}
+                  >
+                    🏛️ Campus Achievements Modal ↗
+                  </button>
                 </div>
               </div>
+            ) : (
+              <div className="sponsored-tab-content">
+                {/* Both Sponsored Projects from this college */}
+                {currentCollege.sponsoredProjects.map((spProj) => (
+                  <div key={spProj.id} className="sponsored-project" style={{ marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                      <small style={{ color: 'var(--primary, #6366f1)', fontWeight: 700 }}>{spProj.grant}</small>
+                      <span style={{ fontSize: '10px', background: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>
+                        {spProj.sponsor}
+                      </span>
+                    </div>
+                    <h4 style={{ fontSize: '13px', margin: '3px 0' }}>{spProj.title}</h4>
+                    <p style={{ fontSize: '11.5px', margin: '0 0 6px' }}>{spProj.description}</p>
+                    <button
+                      type="button"
+                      className="explore-sponsored-btn"
+                      onClick={() => handleOpenSponsoredProject(spProj)}
+                      style={{ fontSize: '11px', padding: '4px 8px' }}
+                    >
+                      View Project Details →
+                    </button>
+                  </div>
+                ))}
 
-              {/* Campus Achievements Mini Pills */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '10px' }}>
-                <div style={{ background: 'var(--surface-subtle, #f8fafc)', border: '1px solid var(--border)', borderRadius: '6px', padding: '6px 8px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--primary, #6366f1)' }}>🚀 1st in India</div>
-                  <div style={{ fontSize: '10px', color: 'var(--muted)' }}>Student Sounding Rocket</div>
-                </div>
-                <div style={{ background: 'var(--surface-subtle, #f8fafc)', border: '1px solid var(--border)', borderRadius: '6px', padding: '6px 8px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#10b981' }}>🏆 SIH 1st Prize</div>
-                  <div style={{ fontSize: '10px', color: 'var(--muted)' }}>Smart India Hackathon</div>
-                </div>
-              </div>
-
-              {/* Innovation highlight */}
-              <div style={{ background: 'rgba(99, 102, 241, 0.05)', border: '1px dashed var(--primary, #6366f1)', borderRadius: '8px', padding: '8px 10px', marginBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  <span>💡</span> 45+ Student Patents & IIC Hub
-                </div>
-                <p style={{ margin: '3px 0 0', fontSize: '10.5px', color: 'var(--muted)', lineHeight: 1.35 }}>
-                  ISRO-recognized rocketry team & state-funded student incubation labs.
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <button
-                  type="button"
-                  className="explore-sponsored-btn"
-                  style={{ width: '100%', textAlign: 'center', justifyContent: 'center', padding: '7px 10px', fontSize: '11.5px', borderRadius: '6px' }}
-                  onClick={handleFilterVssut}
-                >
-                  🎓 View VSSUT Projects ({projects.filter(p => (p.author?.college && p.author.college.includes('VSSUT')) || (p.tags && p.tags.includes('VSSUT'))).length}) →
-                </button>
                 <button
                   type="button"
                   className="outline-btn"
-                  style={{ width: '100%', padding: '6px 10px', fontSize: '11px', textAlign: 'center', borderRadius: '6px' }}
-                  onClick={() => setIsCampusModalOpen(true)}
+                  style={{ width: '100%', padding: '6px', fontSize: '11px', textAlign: 'center', borderRadius: '6px' }}
+                  onClick={() => setIsCreateProjectOpen(true)}
                 >
-                  🏛️ Campus Achievements Modal ↗
+                  {currentCollege.grantApplyLabel}
                 </button>
               </div>
-            </div>
-          ) : (
-            <div className="sponsored-tab-content">
-              {/* VSSUT Sponsored Project 1 */}
-              <div className="sponsored-project" style={{ marginBottom: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
-                  <small style={{ color: 'var(--primary, #6366f1)', fontWeight: 700 }}>₹2,50,000 GRANT</small>
-                  <span style={{ fontSize: '10px', background: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>VSSUT · ISRO</span>
-                </div>
-                <h4 style={{ fontSize: '13px', margin: '3px 0' }}>VSLV-X Suborbital CanSat</h4>
-                <p style={{ fontSize: '11.5px', margin: '0 0 6px' }}>Indigenous rocketry & telemetry developed by VSSUT students.</p>
-                <button
-                  type="button"
-                  className="explore-sponsored-btn"
-                  onClick={handleOpenVslvProject}
-                  style={{ fontSize: '11px', padding: '4px 8px' }}
-                >
-                  View Project Details →
-                </button>
-              </div>
-
-              {/* VSSUT Sponsored Project 2 */}
-              <div className="sponsored-project" style={{ marginBottom: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
-                  <small style={{ color: 'var(--primary, #6366f1)', fontWeight: 700 }}>₹1,00,000 GRANT</small>
-                  <span style={{ fontSize: '10px', background: 'rgba(245,158,11,0.1)', color: '#f59e0b', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>VSSUT IIC</span>
-                </div>
-                <h4 style={{ fontSize: '13px', margin: '3px 0' }}>Smart Campus IoT Grid</h4>
-                <p style={{ fontSize: '11.5px', margin: '0 0 6px' }}>Hostel energy monitoring & surge protector system.</p>
-                <button
-                  type="button"
-                  className="explore-sponsored-btn"
-                  onClick={handleOpenSmartCampusProject}
-                  style={{ fontSize: '11px', padding: '4px 8px' }}
-                >
-                  View Project Details →
-                </button>
-              </div>
-
-              <button
-                type="button"
-                className="outline-btn"
-                style={{ width: '100%', padding: '6px', fontSize: '11px', textAlign: 'center', borderRadius: '6px' }}
-                onClick={() => setIsCreateProjectOpen(true)}
-              >
-                ＋ Apply for VSSUT Grant
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </aside>
 
@@ -759,7 +822,8 @@ export default function HomePage({ searchQuery = '' }) {
       <VSSUTCampusModal
         isOpen={isCampusModalOpen}
         onClose={() => setIsCampusModalOpen(false)}
-        onExploreProjects={handleFilterVssut}
+        onExploreProjects={(query) => handleFilterByCollege(query || currentCollege.filterQuery)}
+        college={currentCollege}
       />
     </main>
   );

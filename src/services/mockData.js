@@ -99,16 +99,126 @@ export const initialProjects = [
       avatarColor: "purple",
       initials: "DM"
     },
-    category: "security",
+    category: "hardware",
     badge: "Cybersecurity",
     title: "Zero-Trust LAN Packet Inspector for College WiFi",
     description: "Lightweight traffic analysis and packet anomaly detection daemon designed for restricted university networks to block ARP poisoning and DNS spoofing.",
-    tags: ["Go", "Wireshark", "Linux", "eBPF", "Grafana"],
+    tags: ["Go", "Wireshark", "Linux", "eBPF", "Grafana", "IIT Bhubaneswar"],
     likes: 19,
     liked: false,
     comments: [],
     status: "Research Phase",
     neededRoles: ["Linux Kernel Dev", "Security Researcher"]
+  },
+  {
+    id: "proj-iitbbs-auv",
+    author: {
+      name: "Team AUV BBS",
+      role: "Marine Robotics Engineers",
+      college: "IIT Bhubaneswar",
+      avatarColor: "blue",
+      initials: "AU"
+    },
+    category: "hardware",
+    badge: "Marine Robotics · MoES",
+    title: "DeepSea AUV Autonomous Underwater Drone",
+    description: "Self-navigating autonomous underwater vehicle (AUV) for deep ocean acoustic sensing, pipeline inspection, and underwater obstacle avoidance using ROS2.",
+    tags: ["Robotics", "ROS2", "ComputerVision", "Python", "IIT Bhubaneswar"],
+    likes: 62,
+    liked: false,
+    comments: [
+      { id: 1, author: "Debashis Mohapatra", text: "Great acoustic payload testing in deep waters!", time: "4h ago" }
+    ],
+    status: "Testing Phase",
+    neededRoles: ["Acoustic Sensor Dev", "Embedded C++ Eng"]
+  },
+  {
+    id: "proj-nitr-fsae",
+    author: {
+      name: "Team Black Mamba",
+      role: "Formula Student Engineers",
+      college: "NIT Rourkela",
+      avatarColor: "orange",
+      initials: "BM"
+    },
+    category: "hardware",
+    badge: "Formula Student · EV",
+    title: "Team Black Mamba Electric Formula Racecar",
+    description: "High-performance formula-style student racecar with custom regenerative braking, 400V lithium battery pack, and telemetry dashboard.",
+    tags: ["FormulaStudent", "EV", "BMS", "CAD", "NIT Rourkela"],
+    likes: 78,
+    liked: false,
+    comments: [
+      { id: 1, author: "Shridhara Panda", text: "Awesome torque vectoring algorithm!", time: "2h ago" }
+    ],
+    status: "Track Ready",
+    neededRoles: ["BMS Software Dev", "Suspension Lead"]
+  },
+  {
+    id: "proj-nitr-drone",
+    author: {
+      name: "Subham Mohanty",
+      role: "Automation Engineer",
+      college: "NIT Rourkela",
+      avatarColor: "green",
+      initials: "SM"
+    },
+    category: "ai",
+    badge: "AI & Agriculture",
+    title: "AI AgriDrone Swarm for Precision Spraying",
+    description: "Autonomous UAV drone swarm equipped with multispectral NDVI cameras for real-time crop disease diagnosis and targeted nano-fertilizer spraying.",
+    tags: ["Drones", "AI", "PyTorch", "PX4", "NIT Rourkela"],
+    likes: 45,
+    liked: false,
+    comments: [
+      { id: 1, author: "Priya Sahoo", text: "Great solution for localized pest management.", time: "1d ago" }
+    ],
+    status: "Prototype Ready",
+    neededRoles: ["Drone Pilot", "Computer Vision Specialist"]
+  },
+  {
+    id: "proj-bits-hyperloop",
+    author: {
+      name: "Team Hyperloop India",
+      role: "Multidisciplinary Engineers",
+      college: "BITS Pilani",
+      avatarColor: "purple",
+      initials: "HL"
+    },
+    category: "hardware",
+    badge: "Hyperloop · Global Finalist",
+    title: "BITS Hyperloop Magnetic Levitation Pod",
+    description: "Sub-scale vacuum tube transportation pod featuring passive magnetic levitation skids, eddy-current deceleration brakes, and high-speed telemetry.",
+    tags: ["Hyperloop", "MagLev", "LinearInduction", "Simulink", "BITS Pilani"],
+    likes: 95,
+    liked: false,
+    comments: [
+      { id: 1, author: "Alex Chen", text: "Incredible vacuum seal testing results!", time: "6h ago" }
+    ],
+    status: "Global Finalist",
+    neededRoles: ["Magnetic Levitation Eng", "Telemetry Specialist"]
+  },
+  {
+    id: "proj-bits-grid",
+    author: {
+      name: "Rohan Kulkarni",
+      role: "CleanTech Dev",
+      college: "BITS Pilani",
+      avatarColor: "cyan",
+      initials: "RK"
+    },
+    category: "web",
+    badge: "CleanTech · Smart Grid",
+    title: "Decentralized Peer-to-Peer Campus Solar Micro-Grid",
+    description: "Smart contract-driven peer-to-peer solar energy trading platform for university dormitories and hostel rooftop solar installations.",
+    tags: ["Blockchain", "SmartGrids", "Solidity", "React", "BITS Pilani"],
+    likes: 38,
+    liked: false,
+    comments: [
+      { id: 1, author: "Debashis Mohapatra", text: "Very solid token economics model.", time: "3d ago" }
+    ],
+    status: "Sandbox Live",
+    neededRoles: ["Solidity Dev", "Frontend Engineer"]
   }
 ];
 

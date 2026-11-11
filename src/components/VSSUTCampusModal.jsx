@@ -1,6 +1,10 @@
 import React, { useEffect } from 'react';
+import { featuredColleges } from '../data/collegesData';
 
-export default function VSSUTCampusModal({ isOpen, onClose, onExploreProjects }) {
+export default function VSSUTCampusModal({ isOpen, onClose, onExploreProjects, college }) {
+  const activeCollege = college || featuredColleges[0];
+  const { modalData, stats } = activeCollege;
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
@@ -51,23 +55,22 @@ export default function VSSUTCampusModal({ isOpen, onClose, onExploreProjects })
 
         {/* Header */}
         <div className="eyebrow" style={{ color: 'var(--primary, #6366f1)', fontWeight: 700, fontSize: '11px', letterSpacing: '1px' }}>
-          CAMPUS SPOTLIGHT · ESTD. 1956
+          {modalData?.eyebrow || 'CAMPUS SPOTLIGHT'}
         </div>
         <h2 style={{ margin: '4px 0 6px', fontSize: '22px', fontWeight: 800 }}>
-          Veer Surendra Sai University of Technology (VSSUT)
+          {activeCollege.fullName} ({activeCollege.name})
         </h2>
         <p style={{ color: 'var(--muted, #64748b)', fontSize: '13px', margin: '0 0 16px' }}>
-          Burla, Sambalpur, Odisha · Formerly UCE Burla · Premier Innovation Hub
+          {activeCollege.location} · {activeCollege.estd}
         </p>
 
         {/* Campus Hero Image Banner */}
         <div style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', maxHeight: '240px', marginBottom: '20px' }}>
           <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/VSSUT_Burla_Main_Building.jpg/800px-VSSUT_Burla_Main_Building.jpg"
-            alt="VSSUT Burla Main Building"
+            src={activeCollege.campusImage}
+            alt={`${activeCollege.name} Main Campus`}
             onError={(e) => {
-              // Fallback to high-res architecture if external CDN blocked
-              e.currentTarget.src = "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80";
+              e.currentTarget.src = activeCollege.fallbackImage || "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80";
             }}
             style={{ width: '100%', height: '220px', objectFit: 'cover', display: 'block' }}
           />
@@ -75,7 +78,7 @@ export default function VSSUTCampusModal({ isOpen, onClose, onExploreProjects })
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'linear-gradient(to top, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.2) 60%, transparent 100%)',
+              background: 'linear-gradient(to top, rgba(15, 23, 42, 0.88) 0%, rgba(15, 23, 42, 0.25) 60%, transparent 100%)',
               display: 'flex',
               alignItems: 'flex-end',
               padding: '16px 20px'
@@ -86,10 +89,10 @@ export default function VSSUTCampusModal({ isOpen, onClose, onExploreProjects })
                 Flagship Campus
               </span>
               <h3 style={{ color: '#fff', fontSize: '17px', margin: '6px 0 2px', fontWeight: 700 }}>
-                Iconic Main Heritage Building & Innovation Labs
+                {activeCollege.fullName}
               </h3>
               <p style={{ color: '#cbd5e1', fontSize: '12px', margin: 0 }}>
-                Nestled at the foothills of Hirakud, inspiring 65+ years of engineering breakthroughs.
+                {modalData?.heroSubtitle || `${activeCollege.name} premier technical ecosystem.`}
               </p>
             </div>
           </div>
@@ -105,20 +108,36 @@ export default function VSSUTCampusModal({ isOpen, onClose, onExploreProjects })
           }}
         >
           <div style={{ background: 'var(--surface-subtle, rgba(99, 102, 241, 0.05))', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
-            <strong style={{ fontSize: '20px', color: 'var(--primary, #6366f1)', display: 'block' }}>1956</strong>
-            <span style={{ fontSize: '11px', color: 'var(--muted)' }}>Oldest Tech Univ in Odisha</span>
+            <strong style={{ fontSize: '18px', color: 'var(--primary, #6366f1)', display: 'block' }}>
+              {stats?.stat3?.value || 'Estd'}
+            </strong>
+            <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
+              {stats?.stat3?.label || 'Legacy'}
+            </span>
           </div>
           <div style={{ background: 'var(--surface-subtle, rgba(99, 102, 241, 0.05))', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
-            <strong style={{ fontSize: '20px', color: '#10b981', display: 'block' }}>1st in India</strong>
-            <span style={{ fontSize: '11px', color: 'var(--muted)' }}>Student Sounding Rocket (VSLV)</span>
+            <strong style={{ fontSize: '18px', color: '#10b981', display: 'block' }}>
+              {stats?.stat1?.value || '1st'}
+            </strong>
+            <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
+              {stats?.stat1?.label || 'Top Achievement'}
+            </span>
           </div>
           <div style={{ background: 'var(--surface-subtle, rgba(99, 102, 241, 0.05))', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
-            <strong style={{ fontSize: '20px', color: '#f59e0b', display: 'block' }}>45+</strong>
-            <span style={{ fontSize: '11px', color: 'var(--muted)' }}>Registered Student Patents</span>
+            <strong style={{ fontSize: '18px', color: '#f59e0b', display: 'block' }}>
+              {stats?.stat2?.value || '🏆 Awards'}
+            </strong>
+            <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
+              {stats?.stat2?.label || 'National Honors'}
+            </span>
           </div>
           <div style={{ background: 'var(--surface-subtle, rgba(99, 102, 241, 0.05))', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
-            <strong style={{ fontSize: '20px', color: '#ec4899', display: 'block' }}>35,000+</strong>
-            <span style={{ fontSize: '11px', color: 'var(--muted)' }}>Global Alumni Leaders</span>
+            <strong style={{ fontSize: '18px', color: '#ec4899', display: 'block' }}>
+              {stats?.stat4?.value || 'Patents'}
+            </strong>
+            <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
+              {stats?.stat4?.label || 'Innovations'}
+            </span>
           </div>
         </div>
 
@@ -128,63 +147,31 @@ export default function VSSUTCampusModal({ isOpen, onClose, onExploreProjects })
         </h4>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '22px' }}>
-          <div style={{ padding: '12px 14px', borderRadius: '10px', background: 'var(--surface-subtle, #f8fafc)', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-              <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>🚀 VSLV (VSSUT Student Satellite Launch Vehicle)</strong>
-              <span style={{ fontSize: '10px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>
-                ISRO Recognized · Limca Record
-              </span>
+          {(modalData?.achievements || []).map((ach, idx) => (
+            <div key={idx} style={{ padding: '12px 14px', borderRadius: '10px', background: 'var(--surface-subtle, #f8fafc)', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap', gap: '4px' }}>
+                <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{ach.title}</strong>
+                <span style={{ fontSize: '10px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary, #6366f1)', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>
+                  {ach.badge}
+                </span>
+              </div>
+              <p style={{ fontSize: '12px', color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>
+                {ach.desc}
+              </p>
             </div>
-            <p style={{ fontSize: '12px', color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>
-              India's pioneer student rocketry mission. Designed and launched multiple indigenous solid-motor suborbital rockets carrying CanSat atmospheric and telemetry payloads.
-            </p>
-          </div>
-
-          <div style={{ padding: '12px 14px', borderRadius: '10px', background: 'var(--surface-subtle, #f8fafc)', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-              <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>🥇 Smart India Hackathon National Champions</strong>
-              <span style={{ fontSize: '10px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>
-                1st Prize Winners
-              </span>
-            </div>
-            <p style={{ fontSize: '12px', color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>
-              Multiple student teams won top honors in AI-driven crop disease diagnostics, drone surveillance, and smart hostel energy management systems.
-            </p>
-          </div>
-
-          <div style={{ padding: '12px 14px', borderRadius: '10px', background: 'var(--surface-subtle, #f8fafc)', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-              <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>💡 Idea & Innovation Cell (IIC VSSUT)</strong>
-              <span style={{ fontSize: '10px', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>
-                University Incubator
-              </span>
-            </div>
-            <p style={{ fontSize: '12px', color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>
-              Dedicated state-of-the-art incubation hub providing prototyping hardware, 3D printing labs, and alumni seed grants to turn student concepts into registered intellectual property.
-            </p>
-          </div>
+          ))}
         </div>
 
         {/* Student Clubs Row */}
         <h4 style={{ fontSize: '14px', fontWeight: 700, margin: '16px 0 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span>⚡</span> Active Student Innovation Clubs
+          <span>⚡</span> Active Student Innovation Chapters
         </h4>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
-          <span style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', fontWeight: 600 }}>
-            🚀 VSLV Rocketry Club
-          </span>
-          <span style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', fontWeight: 600 }}>
-            🤖 Robotics Society (Team Vibhav)
-          </span>
-          <span style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', fontWeight: 600 }}>
-            💻 Enigma Coding & Web
-          </span>
-          <span style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', fontWeight: 600 }}>
-            🏎️ SAE Collegiate Club (Formula Baja)
-          </span>
-          <span style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', fontWeight: 600 }}>
-            🎨 Pixel UI/UX Design Club
-          </span>
+          {(modalData?.clubs || []).map((club, idx) => (
+            <span key={idx} style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', fontWeight: 600 }}>
+              {club}
+            </span>
+          ))}
         </div>
 
         {/* Buttons */}
@@ -195,10 +182,10 @@ export default function VSSUTCampusModal({ isOpen, onClose, onExploreProjects })
             style={{ flex: 1, padding: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
             onClick={() => {
               onClose();
-              if (onExploreProjects) onExploreProjects();
+              if (onExploreProjects) onExploreProjects(activeCollege.filterQuery);
             }}
           >
-            <span>🎓</span> Explore VSSUT Student Projects
+            <span>🎓</span> Explore {activeCollege.name} Projects
           </button>
           <button
             type="button"

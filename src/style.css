@@ -2786,3 +2786,81 @@ a {
     color: #818cf8 !important;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
 }
+
+
+/* 10-Second Spotlight Timer Bar & Controls */
+.spotlight-progress-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #10b981, #f59e0b, #ec4899);
+    width: 0%;
+    z-index: 5;
+}
+
+.spotlight-progress-bar.running {
+    animation: spotlightTimer 10s linear infinite;
+}
+
+.spotlight-progress-bar.paused {
+    animation-play-state: paused;
+}
+
+@keyframes spotlightTimer {
+    0% {
+        width: 0%;
+    }
+    100% {
+        width: 100%;
+    }
+}
+
+.carousel-nav-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface-subtle, #f8fafc);
+    color: var(--text-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.2s ease;
+}
+
+.carousel-nav-btn:hover {
+    background: var(--primary, #6366f1);
+    color: #ffffff;
+    border-color: var(--primary, #6366f1);
+}
+
+.spotlight-animated-content {
+    animation: fadeInSlide 0.35s ease;
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0.35;
+        transform: translateY(3px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+[data-theme="dark"] .carousel-nav-btn {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .carousel-nav-btn:hover {
+    background: #6366f1;
+    color: #ffffff;
+}

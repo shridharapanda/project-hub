@@ -99,10 +99,23 @@ export const api = {
   // Projects
   async getProjects() {
     let list = getStorage("ph_projects", initialProjects);
-    if (!list.some(p => p.id === 'proj-vslv')) {
-      const vslv = initialProjects.find(p => p.id === 'proj-vslv');
-      if (vslv) list = [vslv, ...list];
-    }
+    // Ensure all featured spotlight projects are present
+    const keyProjectIds = [
+      'proj-vslv',
+      'proj-2',
+      'proj-4',
+      'proj-iitbbs-auv',
+      'proj-nitr-fsae',
+      'proj-nitr-drone',
+      'proj-bits-hyperloop',
+      'proj-bits-grid'
+    ];
+    keyProjectIds.forEach(id => {
+      if (!list.some(p => (p.id || p._id) === id)) {
+        const item = initialProjects.find(p => (p.id || p._id) === id);
+        if (item) list.push(item);
+      }
+    });
     try {
       const usersDb = JSON.parse(localStorage.getItem('ph_users_db') || '{}');
       list = list.map(p => {
