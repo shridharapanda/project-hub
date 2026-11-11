@@ -1938,32 +1938,32 @@ a {
 }
 
 .notif-btn {
-    padding: 2.5px 8px;
-    font-size: 10px;
-    font-weight: 600;
-    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    font-size: 11px;
+    border-radius: 6px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 3px;
-    line-height: 1.2;
+    justify-content: center;
+    line-height: 1;
     transition: all 0.15s ease;
 }
 
 .notif-btn i {
-    font-size: 9px;
+    font-size: 11px;
 }
 
 .notif-accept-btn {
     background: #10b981;
     color: #ffffff;
-    border: 1px solid #10b981;
+    border: none;
 }
 
 .notif-accept-btn:hover {
     background: #059669;
-    border-color: #059669;
-    transform: translateY(-1px);
+    transform: scale(1.08);
 }
 
 .notif-reject-btn {
@@ -1976,7 +1976,21 @@ a {
     background: #ef4444;
     color: #ffffff;
     border-color: #ef4444;
-    transform: translateY(-1px);
+    transform: scale(1.08);
+}
+
+.notif-mark-read-icon:hover {
+    color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    background: var(--primary-tint) !important;
+    transform: scale(1.06);
+}
+
+.mark-read-symbol-btn:hover {
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    border-color: var(--primary) !important;
+    transform: scale(1.08);
 }
 
 [data-theme="dark"] .notif-reject-btn {

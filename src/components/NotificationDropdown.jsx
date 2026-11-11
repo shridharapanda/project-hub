@@ -30,13 +30,40 @@ export default function NotificationDropdown({
           <h3>Notifications</h3>
           <p>Recent platform alerts & requests</p>
         </div>
-        <button
-          className="notification-close"
-          onClick={onClose}
-          aria-label="Close notifications"
-        >
-          &times;
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {notifications.some(n => !n.read) && (
+            <button
+              type="button"
+              className="notif-mark-read-icon"
+              onClick={onMarkAllRead}
+              title="Mark all as read"
+              aria-label="Mark all as read"
+              style={{
+                width: '26px',
+                height: '26px',
+                borderRadius: '6px',
+                border: '1px solid var(--border)',
+                background: 'transparent',
+                color: 'var(--muted)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '11px',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <i className="fa-solid fa-check-double"></i>
+            </button>
+          )}
+          <button
+            className="notification-close"
+            onClick={onClose}
+            aria-label="Close notifications"
+          >
+            &times;
+          </button>
+        </div>
       </div>
 
       <div className="notification-list" style={{ maxHeight: '350px', overflowY: 'auto' }}>
@@ -62,18 +89,20 @@ export default function NotificationDropdown({
                       className="notif-btn notif-accept-btn"
                       onClick={() => handleAccept(n)}
                       title="Accept request"
-                      style={{ fontSize: '10px', padding: '2.5px 8px', borderRadius: '4px' }}
+                      aria-label="Accept"
+                      style={{ width: '24px', height: '24px', padding: 0, borderRadius: '6px' }}
                     >
-                      <i className="fa-solid fa-check" style={{ fontSize: '9px' }}></i> Accept
+                      <i className="fa-solid fa-check" style={{ fontSize: '11px' }}></i>
                     </button>
                     <button
                       type="button"
                       className="notif-btn notif-reject-btn"
                       onClick={() => handleDismiss(n)}
                       title="Reject request"
-                      style={{ fontSize: '10px', padding: '2.5px 8px', borderRadius: '4px' }}
+                      aria-label="Reject"
+                      style={{ width: '24px', height: '24px', padding: 0, borderRadius: '6px' }}
                     >
-                      <i className="fa-solid fa-xmark" style={{ fontSize: '9px' }}></i> Reject
+                      <i className="fa-solid fa-xmark" style={{ fontSize: '11px' }}></i>
                     </button>
                   </div>
                 )}
@@ -84,13 +113,32 @@ export default function NotificationDropdown({
       </div>
 
       {notifications.some(n => !n.read) && (
-        <button
-          className="mark-read-btn"
-          onClick={onMarkAllRead}
-          style={{ fontSize: '10.5px', padding: '6px 12px' }}
-        >
-          ✓ Mark all as read
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 12px' }}>
+          <button
+            type="button"
+            className="mark-read-symbol-btn"
+            onClick={onMarkAllRead}
+            title="Mark all as read"
+            aria-label="Mark all as read"
+            style={{
+              width: '32px',
+              height: '32px',
+              padding: 0,
+              borderRadius: '50%',
+              border: '1px solid var(--primary-border, rgba(99, 102, 241, 0.3))',
+              background: 'var(--primary-tint, rgba(99, 102, 241, 0.08))',
+              color: 'var(--primary, #4f46e5)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: '13px',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <i className="fa-solid fa-check-double"></i>
+          </button>
+        </div>
       )}
     </div>
   );
