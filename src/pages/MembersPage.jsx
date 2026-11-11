@@ -474,9 +474,10 @@ export default function MembersPage() {
       {/* CREATE PROFILE MODAL */}
       {isModalOpen && (
         <div
-          className="modal-backdrop active"
+          className="modal-backdrop show active"
           role="dialog"
           aria-modal="true"
+          style={{ display: 'flex' }}
           onClick={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }}
         >
           <form className="modal" onSubmit={handleCreateProfile}>

@@ -128,10 +128,11 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
 
   return (
     <div
-      className="modal-backdrop active"
+      className="modal-backdrop show active"
       role="dialog"
       aria-modal="true"
       aria-labelledby="createProjectTitle"
+      style={{ display: 'flex' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <form className="modal" onSubmit={handleSubmit} style={{ maxHeight: '90vh', overflowY: 'auto' }}>

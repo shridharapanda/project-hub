@@ -42,7 +42,7 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
 
   return (
     <div
-      className="modal-backdrop active"
+      className="modal-backdrop show active"
       style={{
         position: 'fixed',
         inset: 0,
