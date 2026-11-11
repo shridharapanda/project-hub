@@ -56,22 +56,24 @@ export default function NotificationDropdown({
                 <small>{n.time}</small>
 
                 {(n.action === 'connect' || n.action === 'collab') && !n.read && (
-                  <div className="notif-actions" style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+                  <div className="notif-actions" style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
                     <button
                       type="button"
                       className="notif-btn notif-accept-btn"
                       onClick={() => handleAccept(n)}
                       title="Accept request"
+                      style={{ fontSize: '10px', padding: '2.5px 8px', borderRadius: '4px' }}
                     >
-                      <i className="fa-solid fa-check"></i> Accept
+                      <i className="fa-solid fa-check" style={{ fontSize: '9px' }}></i> Accept
                     </button>
                     <button
                       type="button"
                       className="notif-btn notif-reject-btn"
                       onClick={() => handleDismiss(n)}
                       title="Reject request"
+                      style={{ fontSize: '10px', padding: '2.5px 8px', borderRadius: '4px' }}
                     >
-                      <i className="fa-solid fa-xmark"></i> Reject
+                      <i className="fa-solid fa-xmark" style={{ fontSize: '9px' }}></i> Reject
                     </button>
                   </div>
                 )}
@@ -82,7 +84,11 @@ export default function NotificationDropdown({
       </div>
 
       {notifications.some(n => !n.read) && (
-        <button className="mark-read-btn" onClick={onMarkAllRead}>
+        <button
+          className="mark-read-btn"
+          onClick={onMarkAllRead}
+          style={{ fontSize: '10.5px', padding: '6px 12px' }}
+        >
           ✓ Mark all as read
         </button>
       )}
