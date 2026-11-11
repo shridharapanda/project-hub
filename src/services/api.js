@@ -99,6 +99,10 @@ export const api = {
   // Projects
   async getProjects() {
     let list = getStorage("ph_projects", initialProjects);
+    if (!list.some(p => p.id === 'proj-vslv')) {
+      const vslv = initialProjects.find(p => p.id === 'proj-vslv');
+      if (vslv) list = [vslv, ...list];
+    }
     try {
       const usersDb = JSON.parse(localStorage.getItem('ph_users_db') || '{}');
       list = list.map(p => {

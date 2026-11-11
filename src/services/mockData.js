@@ -1,6 +1,29 @@
 // Default data matching ProjectHub student platform
 export const initialProjects = [
   {
+    id: "proj-vslv",
+    author: {
+      name: "VSLV Space Team",
+      role: "Aerospace & Embedded Engineers",
+      college: "VSSUT, Burla",
+      avatarColor: "purple",
+      initials: "VS"
+    },
+    category: "iot",
+    badge: "Aerospace · ISRO Backed",
+    title: "VSLV-X Suborbital Rocketry & CanSat Telemetry",
+    description: "Indigenous solid-propellant suborbital sounding rocket with atmospheric CanSat telemetry and GPS recovery payload. Developed at Idea & Innovation Cell, VSSUT Burla.",
+    tags: ["Aerospace", "CanSat", "C++", "Telemetry", "Avionics", "VSSUT"],
+    likes: 84,
+    liked: false,
+    comments: [
+      { id: 1, author: "Shridhara Panda", text: "Proud to see VSLV representing VSSUT Burla across the nation! 🚀", time: "3h ago" },
+      { id: 2, author: "Alex Chen", text: "Telemetry link works flawlessly on 433MHz LoRa.", time: "1h ago" }
+    ],
+    status: "ISRO Backed",
+    neededRoles: ["Avionics Engineer", "Payload Telemetry Dev"]
+  },
+  {
     id: "proj-1",
     author: {
       name: "Shridhara Panda",
@@ -13,7 +36,7 @@ export const initialProjects = [
     badge: "AI / ML",
     title: "AI Attendance System using Facial Recognition",
     description: "An automated real-time classroom attendance tracking system using Python OpenCV and deep face embeddings. Deployed with an admin dashboard for professors.",
-    tags: ["Python", "OpenCV", "Flask", "React", "MongoDB"],
+    tags: ["Python", "OpenCV", "Flask", "React", "MongoDB", "VSSUT"],
     likes: 34,
     liked: false,
     comments: [
@@ -28,15 +51,15 @@ export const initialProjects = [
     author: {
       name: "Priya Sahoo",
       role: "IoT Enthusiast",
-      college: "NIT Rourkela",
+      college: "VSSUT, Burla",
       avatarColor: "cyan",
       initials: "PS"
     },
     category: "iot",
     badge: "IoT & Smart Systems",
     title: "Smart Hostel Energy Monitor & Surge Protector",
-    description: "ESP32-powered wireless smart plugs with energy metering, anomaly detection, and automated cutoff via MQTT broker and mobile app notifications.",
-    tags: ["ESP32", "C++", "MQTT", "Node.js", "TailwindCSS"],
+    description: "ESP32-powered wireless smart plugs with energy metering, anomaly detection, and automated cutoff via MQTT broker and mobile app notifications. Deployed at VSSUT campus hostels.",
+    tags: ["ESP32", "C++", "MQTT", "Node.js", "TailwindCSS", "VSSUT"],
     likes: 27,
     liked: false,
     comments: [

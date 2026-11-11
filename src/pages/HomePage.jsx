@@ -10,6 +10,7 @@ import CollaborateModal from '../components/CollaborateModal';
 import ProjectDetailModal from '../components/ProjectDetailModal';
 import CreateProjectModal from '../components/CreateProjectModal';
 import ProfileModal from '../components/ProfileModal';
+import VSSUTCampusModal from '../components/VSSUTCampusModal';
 
 export default function HomePage({ searchQuery = '' }) {
   const { user } = useAuth();
@@ -19,6 +20,11 @@ export default function HomePage({ searchQuery = '' }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
+
+  // Spotlight and campus filter state
+  const [sponsoredTab, setSponsoredTab] = useState('campus'); // 'campus' | 'sponsored'
+  const [isCampusModalOpen, setIsCampusModalOpen] = useState(false);
+  const [campusFilter, setCampusFilter] = useState('');
 
   // Modals state
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
@@ -176,7 +182,57 @@ export default function HomePage({ searchQuery = '' }) {
     });
   };
 
-  // Filter projects by category and search query
+  // Handlers for VSSUT Campus & Sponsored spotlight
+  const handleFilterVssut = () => {
+    setCampusFilter('VSSUT');
+    setActiveCategory('all');
+    const feedEl = document.getElementById('projects');
+    if (feedEl) feedEl.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleClearCampusFilter = () => {
+    setCampusFilter('');
+  };
+
+  const handleOpenVslvProject = () => {
+    const vslv = projects.find(p => (p.id || p._id) === 'proj-vslv') || {
+      id: 'proj-vslv',
+      title: 'VSLV-X Suborbital Rocketry & CanSat Telemetry',
+      description: "India's first indigenous student sounding rocket system with active telemetry payload, dual-deploy parachute recovery, and real-time atmospheric sensor telemetry designed at VSSUT Burla.",
+      category: 'hardware',
+      author: {
+        name: 'VSLV Space Team',
+        college: 'VSSUT, Burla',
+        course: 'Aerospace & Mechanical Engg'
+      },
+      likes: 84,
+      comments: [],
+      skills: ['Solid Propulsion', 'Avionics', 'CanSat', 'Telemetry', 'Embedded C++'],
+      tags: ['VSSUT', 'Rocketry', 'Aerospace', 'ISRO']
+    };
+    setDetailProject(vslv);
+  };
+
+  const handleOpenSmartCampusProject = () => {
+    const smartHostel = projects.find(p => (p.id || p._id) === 'proj-2') || {
+      id: 'proj-2',
+      title: 'Smart Hostel Energy Monitor & Surge Protector',
+      description: 'IoT-based electrical monitoring and load balancing system for university hostels to prevent overload blackouts and monitor carbon emissions in real-time.',
+      category: 'hardware',
+      author: {
+        name: 'Priya Sahoo',
+        college: 'VSSUT, Burla',
+        course: 'Electrical Engg'
+      },
+      likes: 27,
+      comments: [],
+      skills: ['IoT', 'ESP32', 'React', 'MQTT'],
+      tags: ['VSSUT', 'IoT', 'Hardware']
+    };
+    setDetailProject(smartHostel);
+  };
+
+  // Filter projects by category, search query, and campus filter
   const filteredProjects = projects.filter(p => {
     const matchesCategory =
       activeCategory === 'all' ||
@@ -186,9 +242,16 @@ export default function HomePage({ searchQuery = '' }) {
     const matchesSearch = !query ||
       (p.title && p.title.toLowerCase().includes(query)) ||
       (p.description && p.description.toLowerCase().includes(query)) ||
-      (p.skills && p.skills.some(s => s.toLowerCase().includes(query)));
+      (p.skills && p.skills.some(s => s.toLowerCase().includes(query))) ||
+      (p.author?.college && p.author.college.toLowerCase().includes(query)) ||
+      (p.tags && p.tags.some(t => t.toLowerCase().includes(query)));
 
-    return matchesCategory && matchesSearch;
+    const matchesCampus = !campusFilter || (
+      (p.author?.college && p.author.college.toLowerCase().includes(campusFilter.toLowerCase())) ||
+      (p.tags && p.tags.some(t => t.toLowerCase().includes(campusFilter.toLowerCase())))
+    );
+
+    return matchesCategory && matchesSearch && matchesCampus;
   });
 
   return (
@@ -256,40 +319,197 @@ export default function HomePage({ searchQuery = '' }) {
           </button>
         </div>
 
-        {/* Sponsored Projects */}
-        <div className="card sponsored reveal" style={{ opacity: 1, transform: 'none' }}>
-          <div className="card-title">
-            <h3>Sponsored Projects</h3>
-            <span>✦</span>
+        {/* VSSUT Burla: Campus & Sponsored Spotlight */}
+        <div className="card sponsored reveal vssut-spotlight-card" style={{ opacity: 1, transform: 'none' }}>
+          <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '15px' }}>🏛️</span>
+              <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700 }}>VSSUT Spotlight</h3>
+            </div>
+            <span style={{ fontSize: '10px', background: 'rgba(99, 102, 241, 0.12)', color: 'var(--primary, #6366f1)', padding: '2px 7px', borderRadius: '4px', fontWeight: 700 }}>
+              Burla, Odisha
+            </span>
           </div>
 
-          <div className="sponsored-project">
-            <small>SPONSORED</small>
-            <h4>Smart Campus</h4>
-            <p>Build the next generation campus experience.</p>
+          {/* Tab Switcher: Campus vs Sponsored */}
+          <div className="spotlight-tabs" style={{ display: 'flex', gap: '4px', background: 'var(--surface-subtle, rgba(0,0,0,0.04))', padding: '3px', borderRadius: '8px', marginBottom: '12px' }}>
             <button
-              className="explore-sponsored-btn"
-              onClick={() => {
-                setActiveCategory('web');
+              type="button"
+              className={`spotlight-tab ${sponsoredTab === 'campus' ? 'active' : ''}`}
+              onClick={() => setSponsoredTab('campus')}
+              style={{
+                flex: 1,
+                padding: '6px 4px',
+                fontSize: '11px',
+                fontWeight: 600,
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                background: sponsoredTab === 'campus' ? 'var(--card-bg, #ffffff)' : 'transparent',
+                color: sponsoredTab === 'campus' ? 'var(--primary, #6366f1)' : 'var(--muted, #64748b)',
+                boxShadow: sponsoredTab === 'campus' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.2s ease'
               }}
             >
-              Explore →
+              🏛️ Campus Wins
+            </button>
+            <button
+              type="button"
+              className={`spotlight-tab ${sponsoredTab === 'sponsored' ? 'active' : ''}`}
+              onClick={() => setSponsoredTab('sponsored')}
+              style={{
+                flex: 1,
+                padding: '6px 4px',
+                fontSize: '11px',
+                fontWeight: 600,
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                background: sponsoredTab === 'sponsored' ? 'var(--card-bg, #ffffff)' : 'transparent',
+                color: sponsoredTab === 'sponsored' ? 'var(--primary, #6366f1)' : 'var(--muted, #64748b)',
+                boxShadow: sponsoredTab === 'sponsored' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              🚀 Sponsored Grants
             </button>
           </div>
 
-          <div className="sponsored-project">
-            <small>SPONSORED</small>
-            <h4>AI Agriculture</h4>
-            <p>Technology for modern farming.</p>
-            <button
-              className="explore-sponsored-btn"
-              onClick={() => {
-                setActiveCategory('ai');
-              }}
-            >
-              Explore →
-            </button>
-          </div>
+          {sponsoredTab === 'campus' ? (
+            <div className="campus-tab-content">
+              {/* Campus Real Image Container */}
+              <div
+                className="campus-photo-container"
+                onClick={() => setIsCampusModalOpen(true)}
+                style={{
+                  position: 'relative',
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  height: '115px',
+                  cursor: 'pointer',
+                  marginBottom: '10px',
+                  border: '1px solid var(--border)'
+                }}
+                title="Click to explore VSSUT Campus & History"
+              >
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/VSSUT_Burla_Main_Building.jpg/800px-VSSUT_Burla_Main_Building.jpg"
+                  alt="VSSUT Burla Main Building"
+                  onError={(e) => {
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80";
+                  }}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(to top, rgba(15, 23, 42, 0.88) 0%, rgba(15, 23, 42, 0.2) 65%, transparent 100%)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'flex-end',
+                    padding: '8px 10px'
+                  }}
+                >
+                  <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Estd. 1956 · UCE Burla
+                  </span>
+                  <span style={{ fontSize: '12px', color: '#ffffff', fontWeight: 700, lineHeight: 1.2 }}>
+                    Veer Surendra Sai Univ of Tech
+                  </span>
+                </div>
+              </div>
+
+              {/* Campus Achievements Mini Pills */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '10px' }}>
+                <div style={{ background: 'var(--surface-subtle, #f8fafc)', border: '1px solid var(--border)', borderRadius: '6px', padding: '6px 8px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--primary, #6366f1)' }}>🚀 1st in India</div>
+                  <div style={{ fontSize: '10px', color: 'var(--muted)' }}>Student Sounding Rocket</div>
+                </div>
+                <div style={{ background: 'var(--surface-subtle, #f8fafc)', border: '1px solid var(--border)', borderRadius: '6px', padding: '6px 8px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#10b981' }}>🏆 SIH 1st Prize</div>
+                  <div style={{ fontSize: '10px', color: 'var(--muted)' }}>Smart India Hackathon</div>
+                </div>
+              </div>
+
+              {/* Innovation highlight */}
+              <div style={{ background: 'rgba(99, 102, 241, 0.05)', border: '1px dashed var(--primary, #6366f1)', borderRadius: '8px', padding: '8px 10px', marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  <span>💡</span> 45+ Student Patents & IIC Hub
+                </div>
+                <p style={{ margin: '3px 0 0', fontSize: '10.5px', color: 'var(--muted)', lineHeight: 1.35 }}>
+                  ISRO-recognized rocketry team & state-funded student incubation labs.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <button
+                  type="button"
+                  className="explore-sponsored-btn"
+                  style={{ width: '100%', textAlign: 'center', justifyContent: 'center', padding: '7px 10px', fontSize: '11.5px', borderRadius: '6px' }}
+                  onClick={handleFilterVssut}
+                >
+                  🎓 View VSSUT Projects ({projects.filter(p => (p.author?.college && p.author.college.includes('VSSUT')) || (p.tags && p.tags.includes('VSSUT'))).length}) →
+                </button>
+                <button
+                  type="button"
+                  className="outline-btn"
+                  style={{ width: '100%', padding: '6px 10px', fontSize: '11px', textAlign: 'center', borderRadius: '6px' }}
+                  onClick={() => setIsCampusModalOpen(true)}
+                >
+                  🏛️ Campus Achievements Modal ↗
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="sponsored-tab-content">
+              {/* VSSUT Sponsored Project 1 */}
+              <div className="sponsored-project" style={{ marginBottom: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                  <small style={{ color: 'var(--primary, #6366f1)', fontWeight: 700 }}>₹2,50,000 GRANT</small>
+                  <span style={{ fontSize: '10px', background: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>VSSUT · ISRO</span>
+                </div>
+                <h4 style={{ fontSize: '13px', margin: '3px 0' }}>VSLV-X Suborbital CanSat</h4>
+                <p style={{ fontSize: '11.5px', margin: '0 0 6px' }}>Indigenous rocketry & telemetry developed by VSSUT students.</p>
+                <button
+                  type="button"
+                  className="explore-sponsored-btn"
+                  onClick={handleOpenVslvProject}
+                  style={{ fontSize: '11px', padding: '4px 8px' }}
+                >
+                  View Project Details →
+                </button>
+              </div>
+
+              {/* VSSUT Sponsored Project 2 */}
+              <div className="sponsored-project" style={{ marginBottom: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                  <small style={{ color: 'var(--primary, #6366f1)', fontWeight: 700 }}>₹1,00,000 GRANT</small>
+                  <span style={{ fontSize: '10px', background: 'rgba(245,158,11,0.1)', color: '#f59e0b', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>VSSUT IIC</span>
+                </div>
+                <h4 style={{ fontSize: '13px', margin: '3px 0' }}>Smart Campus IoT Grid</h4>
+                <p style={{ fontSize: '11.5px', margin: '0 0 6px' }}>Hostel energy monitoring & surge protector system.</p>
+                <button
+                  type="button"
+                  className="explore-sponsored-btn"
+                  onClick={handleOpenSmartCampusProject}
+                  style={{ fontSize: '11px', padding: '4px 8px' }}
+                >
+                  View Project Details →
+                </button>
+              </div>
+
+              <button
+                type="button"
+                className="outline-btn"
+                style={{ width: '100%', padding: '6px', fontSize: '11px', textAlign: 'center', borderRadius: '6px' }}
+                onClick={() => setIsCreateProjectOpen(true)}
+              >
+                ＋ Apply for VSSUT Grant
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -337,6 +557,46 @@ export default function HomePage({ searchQuery = '' }) {
             </button>
           ))}
         </div>
+
+        {/* Campus Filter Active Banner */}
+        {campusFilter && (
+          <div
+            className="campus-filter-banner"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '10px 16px',
+              background: 'rgba(99, 102, 241, 0.1)',
+              border: '1px solid var(--primary, #6366f1)',
+              borderRadius: '10px',
+              marginBottom: '16px'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <span>🎓</span>
+              <span>
+                Filtering by <strong>{campusFilter}, Burla</strong> ({filteredProjects.length} projects found)
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleClearCampusFilter}
+              style={{
+                background: 'var(--surface, #ffffff)',
+                border: '1px solid var(--border)',
+                borderRadius: '6px',
+                color: 'var(--primary, #6366f1)',
+                fontWeight: 700,
+                fontSize: '12px',
+                cursor: 'pointer',
+                padding: '4px 10px'
+              }}
+            >
+              Clear Filter ✕
+            </button>
+          </div>
+        )}
 
         {/* Projects Feed */}
         {loading ? (
@@ -494,6 +754,12 @@ export default function HomePage({ searchQuery = '' }) {
         isOpen={Boolean(detailProject)}
         onClose={() => setDetailProject(null)}
         onCollaborate={(p) => setCollaborateProject(p)}
+      />
+
+      <VSSUTCampusModal
+        isOpen={isCampusModalOpen}
+        onClose={() => setIsCampusModalOpen(false)}
+        onExploreProjects={handleFilterVssut}
       />
     </main>
   );
