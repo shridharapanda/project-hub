@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 export default function ProjectDetailModal({ project, isOpen, onClose, onCollaborate }) {
+  const { user } = useAuth();
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
@@ -13,6 +15,21 @@ export default function ProjectDetailModal({ project, isOpen, onClose, onCollabo
   if (!isOpen || !project) return null;
 
   const author = project.author || project.creator;
+
+  const myEmail = (user?.email || '').toLowerCase().trim();
+  const myName = (user?.name || '').toLowerCase().trim();
+  const authorEmail = (author?.email || '').toLowerCase().trim();
+  const authorName = (author?.name || '').toLowerCase().trim();
+
+  const isMyProject = Boolean(
+    user && (
+      (myEmail && authorEmail && myEmail === authorEmail) ||
+      (myName && authorName && myName === authorName) ||
+      (project.userId && user.id && project.userId === user.id) ||
+      (author?.id && user.id && author.id === user.id)
+    )
+  );
+
   let authorAvatar = author?.avatarImage || author?.profilePicture || null;
   if (!authorAvatar && author) {
     try {
@@ -154,17 +171,35 @@ export default function ProjectDetailModal({ project, isOpen, onClose, onCollabo
           )}
         </div>
 
-        <button
-          className="primary-btn"
-          type="button"
-          style={{ marginTop: '24px', width: '100%' }}
-          onClick={() => {
-            onClose();
-            if (onCollaborate) onCollaborate(project);
-          }}
-        >
-          🤝 I'm interested in joining this team
-        </button>
+        {isMyProject ? (
+          <div
+            style={{
+              marginTop: '24px',
+              padding: '12px 16px',
+              borderRadius: '10px',
+              background: 'rgba(99, 102, 241, 0.08)',
+              color: 'var(--primary, #6366f1)',
+              textAlign: 'center',
+              fontWeight: 600,
+              fontSize: '13px',
+              border: '1px solid rgba(99, 102, 241, 0.2)'
+            }}
+          >
+            👑 You are the author of this post
+          </div>
+        ) : (
+          <button
+            className="primary-btn"
+            type="button"
+            style={{ marginTop: '24px', width: '100%' }}
+            onClick={() => {
+              onClose();
+              if (onCollaborate) onCollaborate(project);
+            }}
+          >
+            🤝 I'm interested in joining this team
+          </button>
+        )}
       </div>
     </div>
   );

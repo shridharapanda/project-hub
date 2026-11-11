@@ -120,7 +120,7 @@ export default function Navbar({
                 onClose={() => setShowNotifications(false)}
                 onMarkAllRead={onMarkAllRead || notifContext?.markAllRead}
                 onAccept={(id, from) => notifContext?.acceptRequest(id, from)}
-                onDismiss={(id) => notifContext?.removeNotification(id)}
+                onDismiss={(id) => notifContext?.rejectRequest ? notifContext.rejectRequest(id) : notifContext?.removeNotification(id)}
                 onAction={onNotificationAction}
               />
             )}

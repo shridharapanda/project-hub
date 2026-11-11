@@ -105,12 +105,14 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
         badge: formData.category,
         author: {
           name: user?.name || 'Shridhara Panda',
+          email: user?.email || '',
           role: user?.role || 'Computer Science Engineering',
           college: user?.college || 'VSSUT, Burla',
           initials: (user?.name || 'SP').slice(0, 2).toUpperCase(),
           avatarColor: 'purple',
           avatarImage: user?.avatarImage || user?.profilePicture || null
-        }
+        },
+        userId: user?.id || null
       };
 
       const result = await api.createProject(payload);

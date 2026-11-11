@@ -56,20 +56,22 @@ export default function NotificationDropdown({
                 <small>{n.time}</small>
 
                 {(n.action === 'connect' || n.action === 'collab') && !n.read && (
-                  <div className="notif-actions" style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                  <div className="notif-actions" style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
                     <button
                       type="button"
-                      className="primary-btn-sm notif-btn"
+                      className="notif-btn notif-accept-btn"
                       onClick={() => handleAccept(n)}
+                      title="Accept request"
                     >
-                      {n.action === 'collab' ? 'Accept Request' : 'Connect'}
+                      <i className="fa-solid fa-check"></i> Accept
                     </button>
                     <button
                       type="button"
-                      className="secondary-btn-sm notif-btn"
+                      className="notif-btn notif-reject-btn"
                       onClick={() => handleDismiss(n)}
+                      title="Reject request"
                     >
-                      Dismiss
+                      <i className="fa-solid fa-xmark"></i> Reject
                     </button>
                   </div>
                 )}

@@ -133,9 +133,25 @@ export default function ProjectsPage({ initialSearch = '' }) {
   };
 
   const handleCollaborateSubmit = (projectId, collabData) => {
+    const authorEmail = (collaborateProject?.author?.email || (collaborateProject?.author?.name === 'Shridhara Panda' ? 'shridhara.panda@gmail.com' : (collaborateProject?.author?.name || ''))).toLowerCase().trim();
+    const authorName = (collaborateProject?.author?.name || 'Project Lead').toLowerCase().trim();
+    const myEmail = (user?.email || '').toLowerCase().trim();
+    const myName = (user?.name || '').toLowerCase().trim();
+
+    const isMyOwnProject = Boolean(
+      user && (
+        (myEmail && authorEmail && myEmail === authorEmail) ||
+        (myName && authorName && myName === authorName) ||
+        (collaborateProject?.userId && user.id && collaborateProject.userId === user.id) ||
+        (collaborateProject?.author?.id && user.id && collaborateProject.author.id === user.id)
+      )
+    );
+
+    if (isMyOwnProject) {
+      return;
+    }
+
     api.submitCollaboration(projectId, collabData);
-    const authorEmail = collaborateProject?.author?.email || (collaborateProject?.author?.name === 'Shridhara Panda' ? 'shridhara.panda@gmail.com' : (collaborateProject?.author?.name || ''));
-    const authorName = collaborateProject?.author?.name || 'Project Lead';
 
     addNotification({
       icon: 'fa-user-plus',

@@ -14,13 +14,6 @@ export default function ProjectCard({
   const { user } = useAuth();
   const userEmail = user?.email?.toLowerCase().trim();
 
-  // Multi-user like check: checks if current account email is in project's likedBy list
-  const isLikedByMe = Boolean(
-    userEmail && Array.isArray(project.likedBy)
-      ? project.likedBy.includes(userEmail)
-      : project.liked
-  );
-
   const author = project.author || {
     name: "Student Builder",
     role: "Developer",
@@ -28,6 +21,28 @@ export default function ProjectCard({
     initials: "SB",
     avatarColor: "purple"
   };
+
+  const myEmail = (user?.email || '').toLowerCase().trim();
+  const myName = (user?.name || '').toLowerCase().trim();
+  const authorEmail = (author.email || '').toLowerCase().trim();
+  const authorName = (author.name || '').toLowerCase().trim();
+
+  // Check if current user is the author of this post/project
+  const isMyProject = Boolean(
+    user && (
+      (myEmail && authorEmail && myEmail === authorEmail) ||
+      (myName && authorName && myName === authorName) ||
+      (project.userId && user.id && project.userId === user.id) ||
+      (author.id && user.id && author.id === user.id)
+    )
+  );
+
+  // Multi-user like check: checks if current account email is in project's likedBy list
+  const isLikedByMe = Boolean(
+    userEmail && Array.isArray(project.likedBy)
+      ? project.likedBy.includes(userEmail)
+      : project.liked
+  );
 
   // Dynamically resolve author avatar from author object or persistent users database
   let authorAvatar = author.avatarImage || author.profilePicture || null;
@@ -60,6 +75,7 @@ export default function ProjectCard({
 
   const handleCollaborateClick = (e) => {
     e.stopPropagation();
+    if (isMyProject) return;
     const handler = onOpenCollaborate || onCollaborateClick;
     if (handler) {
       handler(project);
@@ -158,14 +174,33 @@ export default function ProjectCard({
             {project.comments ? project.comments.length : 0}
           </button>
 
-          {/* Join / Collaborate Button */}
-          <button
-            type="button"
-            onClick={handleCollaborateClick}
-            title="Request to join team"
-          >
-            <i className="fa-solid fa-user-plus"></i> Join
-          </button>
+          {/* Join / Collaborate Button (Hidden for owner) */}
+          {!isMyProject ? (
+            <button
+              type="button"
+              onClick={handleCollaborateClick}
+              title="Request to join team"
+            >
+              <i className="fa-solid fa-user-plus"></i> Join
+            </button>
+          ) : (
+            <span
+              style={{
+                fontSize: '11px',
+                color: 'var(--primary, #6366f1)',
+                background: 'rgba(99, 102, 241, 0.08)',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                fontWeight: 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '3px'
+              }}
+              title="You created this post"
+            >
+              👑 Your Post
+            </span>
+          )}
         </div>
 
         {/* View Details Button */}

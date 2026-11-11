@@ -11,8 +11,26 @@ export default function CollaborateModal({ project, isOpen, onClose, onSubmitReq
 
   if (!isOpen || !project) return null;
 
+  const myEmail = (user?.email || '').toLowerCase().trim();
+  const myName = (user?.name || '').toLowerCase().trim();
+  const authorEmail = (project.author?.email || '').toLowerCase().trim();
+  const authorName = (project.author?.name || '').toLowerCase().trim();
+
+  const isMyProject = Boolean(
+    user && (
+      (myEmail && authorEmail && myEmail === authorEmail) ||
+      (myName && authorName && myName === authorName) ||
+      (project.userId && user.id && project.userId === user.id) ||
+      (project.author?.id && user.id && project.author.id === user.id)
+    )
+  );
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isMyProject) {
+      onClose();
+      return;
+    }
     if (onSubmitRequest) {
       onSubmitRequest(project.id || project._id, { role, message });
     } else if (addNotification) {

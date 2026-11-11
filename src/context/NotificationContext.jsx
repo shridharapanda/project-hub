@@ -208,6 +208,25 @@ export function NotificationProvider({ children }) {
     window.dispatchEvent(new Event('ph_connections_updated'));
   };
 
+  const rejectRequest = (notifId) => {
+    setNotifications(prev => {
+      const updated = prev.map(n => n.id === notifId ? {
+        ...n,
+        read: true,
+        action: null,
+        status: 'rejected',
+        description: `Request was declined.`
+      } : n);
+      try {
+        localStorage.setItem('ph_notifications', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    window.dispatchEvent(new Event('ph_notification_event'));
+    window.dispatchEvent(new Event('ph_connections_updated'));
+  };
+
   // Only display notifications meant for the current user
   const userEmailNorm = (user?.email || '').toLowerCase().trim();
   const userNameNorm = (user?.name || '').toLowerCase().trim();
@@ -237,7 +256,8 @@ export function NotificationProvider({ children }) {
         addNotification,
         markAllRead,
         removeNotification,
-        acceptRequest
+        acceptRequest,
+        rejectRequest
       }}
     >
       {children}
