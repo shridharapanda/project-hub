@@ -80,13 +80,26 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
   const [deviceAccounts, setDeviceAccounts] = useState(() => {
     try {
       const stored = localStorage.getItem('ph_device_google_accounts');
+      let accounts = [];
       if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
+        accounts = JSON.parse(stored) || [];
       }
-      return [DEFAULT_DEVICE_ACCOUNT];
+      // Purge any fake test accounts
+      accounts = accounts.filter(a =>
+        a && a.email &&
+        a.email !== 'student.google@gmail.com' &&
+        a.email !== 'student.builder@gmail.com' &&
+        a.email !== 'teststudent@gmail.com' &&
+        !a.name?.toLowerCase().includes('google student') &&
+        !a.name?.toLowerCase().includes('demo student') &&
+        !a.name?.toLowerCase().includes('student builder')
+      );
+
+      // Ensure Shridhara Panda is always top primary device account
+      const otherAccounts = accounts.filter(a => a.email.toLowerCase() !== DEFAULT_DEVICE_ACCOUNT.email.toLowerCase());
+      const finalized = [DEFAULT_DEVICE_ACCOUNT, ...otherAccounts].slice(0, 5);
+      localStorage.setItem('ph_device_google_accounts', JSON.stringify(finalized));
+      return finalized;
     } catch (e) {
       return [DEFAULT_DEVICE_ACCOUNT];
     }
