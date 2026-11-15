@@ -34,47 +34,14 @@ function AppLayout() {
       )}
 
       <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<HomePage searchQuery={searchQuery} />} />
+        <Route path="/home" element={<HomePage searchQuery={searchQuery} />} />
+        <Route path="/projects" element={<ProjectsPage initialSearch={searchQuery} />} />
+        <Route path="/members" element={<MembersPage />} />
+        <Route path="/hackathons" element={<HackathonsPage />} />
+
         {/* Protected routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <HomePage searchQuery={searchQuery} />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/home"
-          element={
-            <ProtectedRoute>
-              <HomePage searchQuery={searchQuery} />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/projects"
-          element={
-            <ProtectedRoute>
-              <ProjectsPage initialSearch={searchQuery} />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/members"
-          element={
-            <ProtectedRoute>
-              <MembersPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/hackathons"
-          element={
-            <ProtectedRoute>
-              <HackathonsPage />
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="/messages"
           element={
