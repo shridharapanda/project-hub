@@ -230,13 +230,14 @@ export function NotificationProvider({ children }) {
   };
 
   // Only display notifications meant for the current user
-  const userEmailNorm = (user?.email || '').toLowerCase().trim();
-  const userNameNorm = (user?.name || '').toLowerCase().trim();
+  const userEmailNorm = (typeof user?.email === 'string' ? user.email : '').toLowerCase().trim();
+  const userNameNorm = (typeof user?.name === 'string' ? user.name : '').toLowerCase().trim();
 
-  const visibleNotifications = notifications.filter(n => {
+  const visibleNotifications = (Array.isArray(notifications) ? notifications : []).filter(n => {
+    if (!n || typeof n !== 'object') return false;
     if (!user) return true;
-    const targetEmail = (n.toEmail || '').toLowerCase().trim();
-    const targetName = (n.toName || '').toLowerCase().trim();
+    const targetEmail = (typeof n.toEmail === 'string' ? n.toEmail : '').toLowerCase().trim();
+    const targetName = (typeof n.toName === 'string' ? n.toName : '').toLowerCase().trim();
 
     // If targeted to a specific user, only that user should see it
     if (targetEmail || targetName) {

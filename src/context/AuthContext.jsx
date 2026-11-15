@@ -14,14 +14,14 @@ function getUsersDb() {
 }
 
 function saveUserToDb(userData) {
-  if (!userData) return;
+  if (!userData || typeof userData !== 'object') return;
   try {
     const db = getUsersDb();
-    if (userData.email) {
+    if (typeof userData.email === 'string' && userData.email.trim()) {
       const emailKey = userData.email.toLowerCase().trim();
       db[emailKey] = { ...(db[emailKey] || {}), ...userData };
     }
-    if (userData.name) {
+    if (typeof userData.name === 'string' && userData.name.trim()) {
       const nameKey = userData.name.toLowerCase().trim();
       db[nameKey] = { ...(db[nameKey] || {}), ...userData };
     }
@@ -46,12 +46,15 @@ export function AuthProvider({ children }) {
       const stored = localStorage.getItem('ph_current_user');
       if (!stored) return null;
       const parsed = JSON.parse(stored);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return null;
+      }
       // Double check if database has fresher profile photo/cover
-      if (parsed?.email || parsed?.name) {
+      if (parsed.email || parsed.name) {
         const db = getUsersDb();
-        const fromDb = (parsed.email && db[parsed.email.toLowerCase().trim()]) ||
-                       (parsed.name && db[parsed.name.toLowerCase().trim()]);
-        if (fromDb) return { ...parsed, ...fromDb };
+        const fromDb = (typeof parsed.email === 'string' && db[parsed.email.toLowerCase().trim()]) ||
+                       (typeof parsed.name === 'string' && db[parsed.name.toLowerCase().trim()]);
+        if (fromDb && typeof fromDb === 'object') return { ...parsed, ...fromDb };
       }
       return parsed;
     } catch (e) {

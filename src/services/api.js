@@ -28,6 +28,42 @@ function setStorage(key, value) {
   }
 }
 
+// Unicode-safe base64 token generator
+function generateSafeToken(name) {
+  try {
+    const raw = `${name || 'user'}_${Date.now()}`;
+    return "ph_token_" + btoa(unescape(encodeURIComponent(raw)));
+  } catch (e) {
+    return "ph_token_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10);
+  }
+}
+
+// Helper to access and initialize registered users
+function getRegisteredUsers() {
+  const defaultUsers = [
+    {
+      name: "Shridhara Panda",
+      phone: "9876543210",
+      college: "VSSUT, Burla",
+      password: "admin"
+    }
+  ];
+
+  let list = getStorage("ph_registered_users", null);
+  if (!Array.isArray(list) || list.length === 0) {
+    setStorage("ph_registered_users", defaultUsers);
+    return defaultUsers;
+  }
+
+  const hasShridhara = list.some(u => u && u.name && u.name.trim().toLowerCase() === "shridhara panda");
+  if (!hasShridhara) {
+    list.unshift(defaultUsers[0]);
+    setStorage("ph_registered_users", list);
+  }
+
+  return list;
+}
+
 export const api = {
   // Authentication: Name & Password login with Phone OTP verification
   async login(identifier, password) {
@@ -41,14 +77,7 @@ export const api = {
       throw new Error("Please enter your password.");
     }
 
-    const registered = getStorage("ph_registered_users", [
-      {
-        name: "Shridhara Panda",
-        phone: "9876543210",
-        college: "VSSUT, Burla",
-        password: "admin"
-      }
-    ]);
+    const registered = getRegisteredUsers();
 
     // Match by Name (case-insensitive) OR Phone (clean digits) OR Email
     const match = registered.find(u =>
@@ -67,7 +96,7 @@ export const api = {
 
     return {
       success: true,
-      token: "ph_token_" + btoa(match.name + "_" + Date.now()),
+      token: generateSafeToken(match.name),
       user: {
         name: match.name,
         phone: match.phone,
@@ -83,15 +112,7 @@ export const api = {
     }
 
     const targetPhone = cleanDigits.slice(-10);
-
-    const registered = getStorage("ph_registered_users", [
-      {
-        name: "Shridhara Panda",
-        phone: "9876543210",
-        college: "VSSUT, Burla",
-        password: "admin"
-      }
-    ]);
+    const registered = getRegisteredUsers();
 
     const match = registered.find(u =>
       u.phone && u.phone.replace(/\D/g, '').endsWith(targetPhone)
@@ -145,14 +166,7 @@ export const api = {
     }
 
     // OTP verified! Update password in registered users list
-    const registered = getStorage("ph_registered_users", [
-      {
-        name: "Shridhara Panda",
-        phone: "9876543210",
-        college: "VSSUT, Burla",
-        password: "admin"
-      }
-    ]);
+    const registered = getRegisteredUsers();
 
     const userIndex = registered.findIndex(u =>
       u.phone && u.phone.replace(/\D/g, '').endsWith(targetPhone)
@@ -166,12 +180,14 @@ export const api = {
     setStorage("ph_registered_users", registered);
 
     // Clear active OTP
-    localStorage.removeItem("ph_active_otp");
+    try {
+      localStorage.removeItem("ph_active_otp");
+    } catch (e) {}
 
     const updatedUser = registered[userIndex];
     return {
       success: true,
-      token: "ph_token_" + btoa(updatedUser.name + "_" + Date.now()),
+      token: generateSafeToken(updatedUser.name),
       user: {
         name: updatedUser.name,
         phone: updatedUser.phone,
@@ -198,14 +214,7 @@ export const api = {
       throw new Error("Password must be at least 4 characters.");
     }
 
-    const registered = getStorage("ph_registered_users", [
-      {
-        name: "Shridhara Panda",
-        phone: "9876543210",
-        college: "VSSUT, Burla",
-        password: "admin"
-      }
-    ]);
+    const registered = getRegisteredUsers();
 
     // Check if phone or name is already registered
     const existing = registered.find(u =>
@@ -232,7 +241,7 @@ export const api = {
 
     return {
       success: true,
-      token: "ph_token_" + btoa(cleanName + "_" + Date.now()),
+      token: generateSafeToken(cleanName),
       user: {
         name: newUserRecord.name,
         phone: newUserRecord.phone,

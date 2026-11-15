@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="google-site-verification" content="G16LM5X-gWpR8HjA_P6emMlM8T4HpxpIQr9-MmH8uAM" />
 
@@ -77,6 +80,21 @@
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
   />
+  <script>
+    // Fail-safe error reporter and stale cache auto-recovery
+    window.addEventListener('error', function(e) {
+      console.warn('ProjectHub Script Load Notice:', e.message);
+      var loader = document.getElementById('ph-root-loader');
+      if (loader) {
+        loader.innerHTML = '<div style="max-width:400px;width:100%;margin:0 auto;background:#1e293b;padding:32px 24px;border-radius:18px;border:1px solid #334155;box-shadow:0 15px 35px rgba(0,0,0,0.4);">' +
+          '<div style="font-size:24px;font-weight:800;color:#6366f1;margin-bottom:8px;">Project<span style="color:#ffffff;">Hub</span></div>' +
+          '<h2 style="font-size:18px;color:#ffffff;margin:0 0 10px;">Browser Cache Recovery</h2>' +
+          '<p style="font-size:13px;color:#94a3b8;line-height:1.5;margin:0 0 20px;">Your browser may have cached an earlier update. Click below to load the latest sign in page cleanly.</p>' +
+          '<button onclick="try{localStorage.removeItem(\'ph_current_user\');localStorage.removeItem(\'token\');sessionStorage.clear();}catch(err){}window.location.reload(true);" style="width:100%;padding:12px;background:#4f46e5;color:#ffffff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">Refresh & Sign In</button>' +
+          '</div>';
+      }
+    });
+  </script>
 </head>
 <body>
   <noscript>
@@ -96,12 +114,13 @@
     </div>
   </noscript>
   <div id="root">
-    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #ffffff; text-align: center; padding: 20px;">
-      <div>
-        <div style="font-size: 26px; font-weight: 850; color: #4f46e5; margin-bottom: 8px;">Project<span style="color:#ffffff;">Hub</span></div>
-        <p style="font-size: 13.5px; color: #94a3b8; margin: 0 0 16px;">Loading Student Project Hub...</p>
-        <button onclick="window.location.reload(true)" style="padding: 9px 18px; border-radius: 10px; border: 1px solid #334155; background: #1e293b; color: #f8fafc; font-size: 13px; font-weight: 600; cursor: pointer;">
-          Refresh
+    <div id="ph-root-loader" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #ffffff; text-align: center; padding: 20px;">
+      <div style="max-width: 400px; width: 100%; background: #1e293b; border: 1px solid #334155; border-radius: 18px; padding: 32px 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+        <div style="font-size: 26px; font-weight: 850; color: #6366f1; margin-bottom: 8px;">Project<span style="color:#ffffff;">Hub</span></div>
+        <h2 style="font-size: 19px; color: #ffffff; margin: 0 0 8px;">Student Sign In</h2>
+        <p style="font-size: 13px; color: #94a3b8; margin: 0 0 20px; line-height: 1.5;">Loading Student Project Hub...</p>
+        <button onclick="try{localStorage.removeItem('token');localStorage.removeItem('ph_current_user');sessionStorage.clear();}catch(e){}window.location.reload(true);" style="width: 100%; padding: 11px 20px; border-radius: 10px; border: none; background: #4f46e5; color: #ffffff; font-size: 13.5px; font-weight: 700; cursor: pointer;">
+          Refresh Page
         </button>
       </div>
     </div>
