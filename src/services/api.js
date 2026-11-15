@@ -99,6 +99,65 @@ export const api = {
   // Projects
   async getProjects() {
     let list = getStorage("ph_projects", initialProjects);
+
+    // Fetch live cloud projects from MongoDB on Render so friends see each other's work
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/projects`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.projects) && data.projects.length > 0) {
+          const cloudProjects = data.projects.map(cp => {
+            const rawCat = (cp.category || "web").toLowerCase();
+            const normalizedCategory = rawCat.includes("ai") || rawCat.includes("ml")
+              ? "ai"
+              : rawCat.includes("hardware") || rawCat.includes("iot")
+              ? "hardware"
+              : "web";
+
+            return {
+              id: cp._id,
+              _id: cp._id,
+              title: cp.title,
+              description: cp.description,
+              category: normalizedCategory,
+              skills: Array.isArray(cp.skills) ? cp.skills : [],
+              requiredMembers: cp.requiredMembers || 3,
+              githubLink: cp.githubLink || "",
+              demoLink: cp.demoLink || "",
+              mediaUrl: cp.image || "",
+              likes: Array.isArray(cp.likes) ? cp.likes.length : 0,
+              likedBy: Array.isArray(cp.likes) ? cp.likes : [],
+              liked: false,
+              comments: [],
+              badge: cp.category || "Cloud Project",
+              author: {
+                name: cp.creator?.name || "Student Builder",
+                college: cp.creator?.college || "VSSUT, Burla",
+                role: cp.creator?.branch || "Student Developer",
+                avatarImage: cp.creator?.profilePicture || null,
+                initials: (cp.creator?.name || "SB").slice(0, 2).toUpperCase()
+              },
+              tags: [cp.category || "Student", ...(Array.isArray(cp.skills) ? cp.skills : [])],
+              createdAt: cp.createdAt
+            };
+          });
+
+          // Cloud projects at the top, then local projects
+          const merged = [...cloudProjects];
+          list.forEach(lp => {
+            const id = lp.id || lp._id;
+            if (!merged.some(m => (m.id || m._id) === id)) {
+              merged.push(lp);
+            }
+          });
+          list = merged;
+          setStorage("ph_projects", list);
+        }
+      }
+    } catch (e) {
+      console.warn("Backend getProjects unavailable, using local cache");
+    }
+
     // Ensure all featured spotlight projects are present
     const keyProjectIds = [
       'proj-vslv',
@@ -205,8 +264,57 @@ export const api = {
 
   async createProject(projectData) {
     const current = getStorage("ph_projects", initialProjects);
+    let cloudId = null;
+
+    // Map category to backend enum: ["AI/ML", "Web Development", "Mobile Development", "Cybersecurity", "Data Science", "Open Source", "Social Impact", "Other"]
+    let backendCategory = "Web Development";
+    const cat = (projectData.category || "").toLowerCase();
+    if (cat.includes("ai") || cat.includes("ml")) backendCategory = "AI/ML";
+    else if (cat.includes("mobile") || cat.includes("app")) backendCategory = "Mobile Development";
+    else if (cat.includes("cyber") || cat.includes("security")) backendCategory = "Cybersecurity";
+    else if (cat.includes("data")) backendCategory = "Data Science";
+    else if (cat.includes("social")) backendCategory = "Social Impact";
+    else if (cat.includes("open")) backendCategory = "Open Source";
+    else if (cat.includes("hardware") || cat.includes("iot")) backendCategory = "Other";
+    else backendCategory = "Web Development";
+
+    const token = localStorage.getItem("token");
+    if (token && !token.startsWith("ph_token_demo_")) {
+      try {
+        const skillsArr = Array.isArray(projectData.skills)
+          ? projectData.skills
+          : (projectData.skills || "").split(",").map(s => s.trim()).filter(Boolean);
+
+        const res = await fetch(`${BACKEND_URL}/api/projects`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify({
+            title: projectData.title,
+            description: projectData.description,
+            category: backendCategory,
+            skills: skillsArr.length > 0 ? skillsArr : ["React", "JavaScript"],
+            requiredMembers: parseInt(projectData.requiredMembers, 10) || 3,
+            githubLink: projectData.githubLink || "",
+            demoLink: projectData.demoLink || ""
+          })
+        });
+        if (res.ok) {
+          const d = await res.json();
+          if (d.success && d.project?._id) {
+            cloudId = d.project._id;
+          }
+        }
+      } catch (err) {
+        console.warn("Cloud project creation failed, using local fallback", err);
+      }
+    }
+
     const newProject = {
-      id: "proj-" + Date.now(),
+      id: cloudId || "proj-" + Date.now(),
+      _id: cloudId,
       title: projectData.title,
       category: projectData.category || "web",
       description: projectData.description,

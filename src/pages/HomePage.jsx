@@ -36,6 +36,41 @@ export default function HomePage({ searchQuery = '' }) {
   const [collaborateProject, setCollaborateProject] = useState(null);
   const [detailProject, setDetailProject] = useState(null);
 
+  // Invite friends and share state
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+
+  const websiteUrl = 'https://shridharapanda.github.io/project-hub/';
+
+  const handleCopyShareLink = () => {
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(websiteUrl).then(() => {
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2500);
+      }).catch(() => fallbackCopy());
+    } else {
+      fallbackCopy();
+    }
+  };
+
+  const fallbackCopy = () => {
+    const el = document.createElement('textarea');
+    el.value = websiteUrl;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 2500);
+  };
+
+  const handleWhatsAppShare = () => {
+    const text = encodeURIComponent(
+      `Hey! Check out Student Project Hub — discover student projects, find teammates, and build together: ${websiteUrl}`
+    );
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  };
+
   useEffect(() => {
     loadProjects();
     const handleSync = () => loadProjects();
@@ -332,6 +367,95 @@ export default function HomePage({ searchQuery = '' }) {
             onClick={() => setIsProfileOpen(true)}
           >
             Edit Profile
+          </button>
+        </div>
+
+        {/* Invite Friends & Share Card */}
+        <div className="card invite-friends-card reveal" style={{ opacity: 1, transform: 'none', padding: '16px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '18px' }}>🚀</span>
+              <div>
+                <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 700 }}>Invite Friends</h4>
+                <p style={{ margin: '1px 0 0', fontSize: '11px', color: 'var(--muted)' }}>Build together across campus</p>
+              </div>
+            </div>
+            <span style={{ fontSize: '9px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+              LIVE
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '10px' }}>
+            <button
+              type="button"
+              className="share-whatsapp-btn"
+              onClick={handleWhatsAppShare}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '5px',
+                padding: '7px 8px',
+                borderRadius: '8px',
+                border: 'none',
+                background: '#25D366',
+                color: '#fff',
+                fontWeight: 600,
+                fontSize: '11px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              title="Share on WhatsApp with your friends & groups"
+            >
+              <i className="fa-brands fa-whatsapp" style={{ fontSize: '13px' }}></i> WhatsApp
+            </button>
+            <button
+              type="button"
+              className="copy-link-btn"
+              onClick={handleCopyShareLink}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '5px',
+                padding: '7px 8px',
+                borderRadius: '8px',
+                border: '1px solid var(--border)',
+                background: copySuccess ? '#10b981' : 'var(--surface-subtle)',
+                color: copySuccess ? '#fff' : 'var(--text-primary)',
+                fontWeight: 600,
+                fontSize: '11px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              title="Copy website link to clipboard"
+            >
+              <i className={`fa-solid ${copySuccess ? 'fa-check' : 'fa-link'}`}></i> {copySuccess ? 'Copied!' : 'Copy Link'}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className="qr-share-btn"
+            onClick={() => setIsQRModalOpen(true)}
+            style={{
+              width: '100%',
+              marginTop: '8px',
+              padding: '6px',
+              borderRadius: '6px',
+              border: '1px dashed var(--border)',
+              background: 'transparent',
+              color: 'var(--primary, #6366f1)',
+              fontSize: '11px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}
+          >
+            <i className="fa-solid fa-qrcode"></i> Show Phone Scan QR
           </button>
         </div>
 
@@ -831,6 +955,78 @@ export default function HomePage({ searchQuery = '' }) {
         onExploreProjects={(query) => handleFilterByCollege(query || currentCollege.filterQuery)}
         college={currentCollege}
       />
+
+      {/* QR Code Phone Share Modal */}
+      {isQRModalOpen && (
+        <div
+          className="modal-backdrop show active"
+          style={{
+            display: 'flex',
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1200,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(8px)',
+            padding: '20px'
+          }}
+          onClick={() => setIsQRModalOpen(false)}
+        >
+          <div
+            className="modal"
+            style={{
+              maxWidth: '360px',
+              textAlign: 'center',
+              padding: '24px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="close-modal"
+              onClick={() => setIsQRModalOpen(false)}
+            >
+              ×
+            </button>
+            <div className="eyebrow" style={{ color: 'var(--primary, #6366f1)', fontWeight: 700, fontSize: '11px', letterSpacing: '1px' }}>
+              SCAN & OPEN ON MOBILE
+            </div>
+            <h3 style={{ margin: '6px 0 4px', fontSize: '18px' }}>Open ProjectHub</h3>
+            <p style={{ fontSize: '12px', color: 'var(--muted)', margin: '0 0 16px' }}>
+              Ask your friends to scan this QR code with their phone camera to instantly open ProjectHub!
+            </p>
+            <div style={{ background: '#fff', padding: '12px', borderRadius: '12px', display: 'inline-block', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+              <img
+                src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://shridharapanda.github.io/project-hub/"
+                alt="ProjectHub QR Code"
+                style={{ width: '180px', height: '180px', display: 'block' }}
+              />
+            </div>
+            <div style={{ marginTop: '14px', fontSize: '12px', color: 'var(--text-primary)', wordBreak: 'break-all' }}>
+              <strong>shridharapanda.github.io/project-hub/</strong>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+              <button
+                type="button"
+                className="primary-btn"
+                style={{ flex: 1, padding: '9px', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+                onClick={handleWhatsAppShare}
+              >
+                <i className="fa-brands fa-whatsapp"></i> WhatsApp
+              </button>
+              <button
+                type="button"
+                className="secondary-btn"
+                style={{ flex: 1, padding: '9px', fontSize: '12px' }}
+                onClick={handleCopyShareLink}
+              >
+                {copySuccess ? 'Copied! ✓' : 'Copy Link'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

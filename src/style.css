@@ -2864,3 +2864,35 @@ a {
     background: #6366f1;
     color: #ffffff;
 }
+
+
+/* Invite Friends & Share Card */
+.invite-friends-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.share-whatsapp-btn:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+
+.copy-link-btn:hover {
+    background: var(--surface);
+    border-color: var(--primary);
+}
+
+.qr-share-btn:hover {
+    border-color: var(--primary);
+    background: rgba(99, 102, 241, 0.05);
+}
+
+[data-theme="dark"] .invite-friends-card {
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .copy-link-btn {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #e2e8f0;
+}

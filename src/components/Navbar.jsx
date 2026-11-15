@@ -22,6 +22,26 @@ export default function Navbar({
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(propSearchQuery);
+  const [shareToast, setShareToast] = useState(false);
+
+  const handleShareSite = async () => {
+    const shareData = {
+      title: 'Student Project Hub',
+      text: 'Discover student projects, find teammates, and build together on ProjectHub!',
+      url: 'https://shridharapanda.github.io/project-hub/'
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {}
+    } else {
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(shareData.url);
+      }
+      setShareToast(true);
+      setTimeout(() => setShareToast(false), 2500);
+    }
+  };
 
   const activeNotifications = propNotifications || notifContext?.notifications || [];
   const unreadCount = notifContext?.unreadCount ?? activeNotifications.filter(n => !n.read).length;
@@ -88,6 +108,36 @@ export default function Navbar({
         </nav>
 
         <div className="nav-right">
+          {/* Share Website Button */}
+          <button
+            className="nav-icon-btn share-nav-btn"
+            onClick={handleShareSite}
+            title="Invite Friends / Share ProjectHub"
+            aria-label="Share website"
+            style={{ position: 'relative' }}
+          >
+            <i className={`fa-solid ${shareToast ? 'fa-check' : 'fa-share-nodes'}`} style={{ color: shareToast ? '#10b981' : '' }}></i>
+            {shareToast && (
+              <span style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: '6px',
+                background: '#10b981',
+                color: '#fff',
+                fontSize: '11px',
+                fontWeight: 600,
+                padding: '4px 8px',
+                borderRadius: '6px',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                zIndex: 100
+              }}>
+                Link Copied!
+              </span>
+            )}
+          </button>
+
           {/* Theme Toggle Button */}
           <button
             id="themeToggleBtn"
