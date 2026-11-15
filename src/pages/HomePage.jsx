@@ -54,7 +54,7 @@ export default function HomePage({ searchQuery = '' }) {
       setCurrentCollegeIndex(prev => (prev + 1) % featuredColleges.length);
     }, 10000);
     return () => clearInterval(timer);
-  }, [isSpotlightPaused]);
+  }, [isSpotlightPaused, currentCollegeIndex]);
 
   const loadProjects = async () => {
     try {
@@ -213,7 +213,7 @@ export default function HomePage({ searchQuery = '' }) {
   };
 
   const handleFilterByCollege = (query) => {
-    const q = query || currentCollege.filterQuery;
+    const q = (typeof query === 'string' && query.trim()) ? query.trim() : currentCollege.filterQuery;
     setCampusFilter(q);
     setActiveCategory('all');
     const feedEl = document.getElementById('projects');
@@ -230,12 +230,14 @@ export default function HomePage({ searchQuery = '' }) {
       title: spProject.title,
       description: spProject.description,
       category: spProject.category || 'hardware',
+      badge: spProject.sponsor || `${currentCollege.badge} Grant`,
       author: spProject.author || {
         name: `${currentCollege.name} Builders`,
         college: currentCollege.name
       },
       likes: 45,
       comments: [],
+      neededRoles: ['Developer', 'Hardware Engineer'],
       skills: spProject.skills || ['Engineering', 'Design'],
       tags: spProject.tags || [currentCollege.filterQuery, 'Hardware']
     };
@@ -246,7 +248,11 @@ export default function HomePage({ searchQuery = '' }) {
   const filteredProjects = projects.filter(p => {
     const matchesCategory =
       activeCategory === 'all' ||
-      (p.category && p.category.toLowerCase().includes(activeCategory.toLowerCase()));
+      (p.category && (
+        p.category.toLowerCase().includes(activeCategory.toLowerCase()) ||
+        activeCategory.toLowerCase().includes(p.category.toLowerCase()) ||
+        (activeCategory === 'hardware' && (p.category.toLowerCase() === 'iot' || p.category.toLowerCase() === 'hardware'))
+      ));
 
     const query = searchQuery.toLowerCase().trim();
     const matchesSearch = !query ||

@@ -173,6 +173,7 @@ export default function ProjectsPage({ initialSearch = '' }) {
     'All',
     'AI/ML',
     'Web Development',
+    'Hardware & IoT',
     'Mobile Development',
     'Cybersecurity',
     'Data Science',
@@ -186,14 +187,23 @@ export default function ProjectsPage({ initialSearch = '' }) {
     .filter(p => {
       const matchCat =
         selectedCategory === 'All' ||
-        (p.category && p.category.toLowerCase() === selectedCategory.toLowerCase());
+        (p.category && (
+          p.category.toLowerCase() === selectedCategory.toLowerCase() ||
+          p.category.toLowerCase().includes(selectedCategory.toLowerCase()) ||
+          selectedCategory.toLowerCase().includes(p.category.toLowerCase()) ||
+          (selectedCategory === 'AI/ML' && (p.category.toLowerCase() === 'ai' || p.category.toLowerCase() === 'ai/ml')) ||
+          (selectedCategory === 'Hardware & IoT' && (p.category.toLowerCase() === 'hardware' || p.category.toLowerCase() === 'iot')) ||
+          (selectedCategory === 'Web Development' && (p.category.toLowerCase() === 'web' || p.category.toLowerCase() === 'web development'))
+        ));
 
       const query = search.toLowerCase().trim();
       const matchSearch =
         !query ||
         (p.title && p.title.toLowerCase().includes(query)) ||
         (p.description && p.description.toLowerCase().includes(query)) ||
-        (p.skills && p.skills.some(s => s.toLowerCase().includes(query)));
+        (p.skills && p.skills.some(s => s.toLowerCase().includes(query))) ||
+        (p.tags && p.tags.some(t => t.toLowerCase().includes(query))) ||
+        (p.author?.college && p.author.college.toLowerCase().includes(query));
 
       return matchCat && matchSearch;
     })

@@ -110,12 +110,19 @@ export const api = {
       'proj-bits-hyperloop',
       'proj-bits-grid'
     ];
+    let hasAdded = false;
     keyProjectIds.forEach(id => {
       if (!list.some(p => (p.id || p._id) === id)) {
         const item = initialProjects.find(p => (p.id || p._id) === id);
-        if (item) list.push(item);
+        if (item) {
+          list.push(item);
+          hasAdded = true;
+        }
       }
     });
+    if (hasAdded) {
+      setStorage("ph_projects", list);
+    }
     try {
       const usersDb = JSON.parse(localStorage.getItem('ph_users_db') || '{}');
       list = list.map(p => {
