@@ -13,7 +13,7 @@ export default function RegisterPage() {
   const [message, setMessage] = useState({ text: '', type: '' });
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
-  const { register, demoLogin, loginWithGoogle } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
@@ -50,10 +50,6 @@ export default function RegisterPage() {
     }
   };
 
-  const handleDemoLogin = () => {
-    demoLogin();
-    navigate('/', { replace: true });
-  };
 
   const handleGoogleAccountSelected = async (googleAccount) => {
     setLoading(true);
@@ -196,7 +192,7 @@ export default function RegisterPage() {
             id="regName"
             type="text"
             required
-            placeholder="Shridhara Panda"
+            placeholder="e.g. Rahul Sharma"
             value={name}
             onChange={(e) => setName(e.target.value)}
             style={{
@@ -310,25 +306,6 @@ export default function RegisterPage() {
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
 
-          <button
-            type="button"
-            className="demo-btn"
-            onClick={handleDemoLogin}
-            style={{
-              width: '100%',
-              marginTop: '10px',
-              padding: '11px',
-              background: 'rgba(79, 70, 229, 0.08)',
-              border: '1px solid rgba(79, 70, 229, 0.25)',
-              borderRadius: '10px',
-              color: '#4f46e5',
-              fontWeight: 600,
-              fontSize: '13px',
-              cursor: 'pointer'
-            }}
-          >
-            ⚡ Quick Demo Student Login
-          </button>
 
           {message.text && (
             <p style={{

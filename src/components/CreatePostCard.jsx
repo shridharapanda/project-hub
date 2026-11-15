@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
@@ -40,6 +41,7 @@ const compressImage = (file, maxWidth = 1200, maxHeight = 700, quality = 0.85) =
 
 export default function CreatePostCard({ onPostCreated, onCreatePost }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [text, setText] = useState('');
   const [postType, setPostType] = useState('project');
   const [mediaUrl, setMediaUrl] = useState('');
@@ -47,12 +49,14 @@ export default function CreatePostCard({ onPostCreated, onCreatePost }) {
 
   const fileInputRef = useRef(null);
 
-  const initials = (user?.name || 'SP')
-    .split(' ')
-    .map(w => w[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = user?.name
+    ? user.name
+        .split(' ')
+        .map(w => w[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    : '👋';
 
   const handleMediaFileChange = async (e) => {
     const file = e.target.files?.[0];
@@ -74,11 +78,19 @@ export default function CreatePostCard({ onPostCreated, onCreatePost }) {
   };
 
   const handleMediaButtonClick = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     fileInputRef.current?.click();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     if (!text.trim()) return;
 
     const postCallback = onPostCreated || onCreatePost;
@@ -95,11 +107,11 @@ export default function CreatePostCard({ onPostCreated, onCreatePost }) {
       liked: false,
       comments: [],
       author: {
-        name: user?.name || 'Shridhara Panda',
-        email: user?.email || '',
-        role: user?.role || 'Computer Science Student',
-        college: user?.college || 'VSSUT, Burla',
-        initials: (user?.name || 'SP').slice(0, 2).toUpperCase(),
+        name: user.name || 'Student Builder',
+        email: user.email || '',
+        role: user.role || 'Student Builder',
+        college: user.college || 'Engineering College',
+        initials: (user.name || 'SB').slice(0, 2).toUpperCase(),
         avatarColor: 'purple',
         avatarImage: user?.avatarImage || user?.profilePicture || null
       },
@@ -139,9 +151,12 @@ export default function CreatePostCard({ onPostCreated, onCreatePost }) {
           </div>
           <textarea
             id="postText"
-            placeholder="Share a project update, find teammates, or post an idea..."
+            placeholder={user ? "Share a project update, find teammates, or post an idea..." : "Sign in with your Gmail or student account to post updates & find teammates..."}
             value={text}
             onChange={e => setText(e.target.value)}
+            onFocus={() => {
+              if (!user) navigate('/login');
+            }}
             rows="3"
             required
           />

@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState({ text: '', type: '' });
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
-  const { login, demoLogin, loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,14 +41,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleDemoLogin = () => {
-    setLoading(true);
-    demoLogin();
-    setMessage({ text: 'Logged in with Demo Student account! Redirecting...', type: 'success' });
-    setTimeout(() => {
-      navigate(from, { replace: true });
-    }, 500);
-  };
 
   const handleGoogleAccountSelected = async (googleAccount) => {
     setLoading(true);
@@ -254,26 +246,6 @@ export default function LoginPage() {
             {loading ? 'Signing in...' : 'Log In'}
           </button>
 
-          <button
-            type="button"
-            className="demo-btn"
-            onClick={handleDemoLogin}
-            disabled={loading}
-            style={{
-              width: '100%',
-              marginTop: '10px',
-              padding: '11px',
-              background: 'rgba(79, 70, 229, 0.08)',
-              border: '1px solid rgba(79, 70, 229, 0.25)',
-              borderRadius: '10px',
-              color: '#4f46e5',
-              fontWeight: 600,
-              fontSize: '13px',
-              cursor: 'pointer'
-            }}
-          >
-            ⚡ Quick Demo Student Login
-          </button>
 
           {message.text && (
             <p style={{

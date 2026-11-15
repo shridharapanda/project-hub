@@ -42,6 +42,14 @@ export default function HomePage({ searchQuery = '' }) {
 
   const websiteUrl = 'https://shridharapanda.github.io/project-hub/';
 
+  const handleOpenCreateProject = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    setIsCreateProjectOpen(true);
+  };
+
   const handleCopyShareLink = () => {
     if (navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(websiteUrl).then(() => {
@@ -309,66 +317,111 @@ export default function HomePage({ searchQuery = '' }) {
     <main className="layout">
       {/* ================= LEFT SIDEBAR ================= */}
       <aside className="left">
-        {/* Profile Summary Card */}
-        <div className="card profile reveal" style={{ opacity: 1, transform: 'none' }}>
-          <div
-            className="profile-cover"
-            style={
-              user?.coverImage
-                ? {
-                    backgroundImage: `url(${user.coverImage})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat'
-                  }
-                : {}
-            }
-          ></div>
-          <div className="profile-avatar" style={{ overflow: 'hidden' }}>
-            {user?.avatarImage || user?.profilePicture ? (
-              <img
-                src={user.avatarImage || user.profilePicture}
-                alt={user?.name || 'Profile Avatar'}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            ) : (
-              user?.name ? user.name.slice(0, 2).toUpperCase() : 'SP'
+        {/* Profile Summary Card / Guest Welcome */}
+        {user ? (
+          <div className="card profile reveal" style={{ opacity: 1, transform: 'none' }}>
+            <div
+              className="profile-cover"
+              style={
+                user?.coverImage
+                  ? {
+                      backgroundImage: `url(${user.coverImage})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat'
+                    }
+                  : {}
+              }
+            ></div>
+            <div className="profile-avatar" style={{ overflow: 'hidden' }}>
+              {user?.avatarImage || user?.profilePicture ? (
+                <img
+                  src={user.avatarImage || user.profilePicture}
+                  alt={user?.name || 'Profile Avatar'}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                user?.name ? user.name.slice(0, 2).toUpperCase() : 'SP'
+              )}
+            </div>
+
+            <h2>{user.name}</h2>
+            <p className="college">{user?.college || 'Engineering College'}</p>
+            <p className="course">{user?.course || user?.role || 'Student Builder'}</p>
+
+            <div className="stats">
+              <div>
+                <strong className="counter">{user?.projectsCount || 0}</strong>
+                <span>Projects</span>
+              </div>
+              <div>
+                <strong className="counter">{user?.connectionsCount || 0}</strong>
+                <span>Connections</span>
+              </div>
+              <div>
+                <strong className="counter">{user?.skills?.length || 0}</strong>
+                <span>Skills</span>
+              </div>
+            </div>
+
+            {user?.skills && user.skills.length > 0 && (
+              <div className="skills">
+                {user.skills.map((skill, idx) => (
+                  <span key={idx}>{skill}</span>
+                ))}
+              </div>
             )}
+
+            <button
+              className="outline-btn"
+              id="profileBtn"
+              onClick={() => setIsProfileOpen(true)}
+            >
+              Edit Profile
+            </button>
           </div>
-
-          <h2>{user?.name || 'Shridhara Panda'}</h2>
-          <p className="college">{user?.college || 'VSSUT, Burla'}</p>
-          <p className="course">{user?.course || 'Computer Science Engineering'}</p>
-
-          <div className="stats">
-            <div>
-              <strong className="counter">{user?.projectsCount || 12}</strong>
-              <span>Projects</span>
+        ) : (
+          <div className="card guest-welcome-card reveal" style={{ opacity: 1, transform: 'none', padding: '24px 20px', textAlign: 'center', marginBottom: '16px' }}>
+            <div style={{
+              width: '54px',
+              height: '54px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(99, 102, 241, 0.25))',
+              color: 'var(--primary, #6366f1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '24px',
+              margin: '0 auto 12px'
+            }}>
+              👋
             </div>
-            <div>
-              <strong className="counter">{user?.connectionsCount || 86}</strong>
-              <span>Connections</span>
-            </div>
-            <div>
-              <strong className="counter">{user?.skills?.length || 5}</strong>
-              <span>Skills</span>
+            <h3 style={{ margin: '0 0 6px', fontSize: '16px', fontWeight: 700, color: 'var(--text-color, #0f172a)' }}>
+              Welcome, Student Builder!
+            </h3>
+            <p style={{ margin: '0 0 16px', fontSize: '12.5px', color: 'var(--muted, #64748b)', lineHeight: 1.5 }}>
+              Sign in with your own Gmail or create an account to publish projects, connect with teammates, and share across campus.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button
+                type="button"
+                className="primary-btn"
+                style={{ width: '100%', padding: '10px', fontSize: '13px', fontWeight: 600, justifyContent: 'center' }}
+                onClick={() => navigate('/login')}
+              >
+                Sign In / Join
+              </button>
+              <button
+                type="button"
+                className="outline-btn"
+                style={{ width: '100%', padding: '9px', fontSize: '12.5px', fontWeight: 600, justifyContent: 'center' }}
+                onClick={() => navigate('/register')}
+              >
+                Create Account
+              </button>
             </div>
           </div>
-
-          <div className="skills">
-            {(user?.skills || ['JavaScript', 'HTML', 'CSS', 'C++', 'DSA']).map((skill, idx) => (
-              <span key={idx}>{skill}</span>
-            ))}
-          </div>
-
-          <button
-            className="outline-btn"
-            id="profileBtn"
-            onClick={() => setIsProfileOpen(true)}
-          >
-            Edit Profile
-          </button>
-        </div>
+        )}
 
         {/* Invite Friends & Share Card */}
         <div className="card invite-friends-card reveal" style={{ opacity: 1, transform: 'none', padding: '16px', marginBottom: '16px' }}>
@@ -696,7 +749,7 @@ export default function HomePage({ searchQuery = '' }) {
                   type="button"
                   className="outline-btn"
                   style={{ width: '100%', padding: '6px', fontSize: '11px', textAlign: 'center', borderRadius: '6px' }}
-                  onClick={() => setIsCreateProjectOpen(true)}
+                  onClick={handleOpenCreateProject}
                 >
                   {currentCollege.grantApplyLabel}
                 </button>
@@ -723,7 +776,7 @@ export default function HomePage({ searchQuery = '' }) {
           <button
             className="primary-btn"
             id="createProject"
-            onClick={() => setIsCreateProjectOpen(true)}
+            onClick={handleOpenCreateProject}
           >
             <span>＋</span> Create Project
           </button>

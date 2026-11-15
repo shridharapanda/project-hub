@@ -330,11 +330,11 @@ export const api = {
       comments: [],
       badge: projectData.badge || "Student Project",
       author: projectData.author || {
-        name: "Shridhara Panda",
-        role: "Computer Science Engineering",
-        college: "VSSUT, Burla",
+        name: "Student Builder",
+        role: "Student Innovator",
+        college: "Engineering College",
         avatarColor: "purple",
-        initials: "SP"
+        initials: "SB"
       },
       createdAt: new Date().toISOString()
     };

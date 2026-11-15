@@ -115,53 +115,25 @@ export function AuthProvider({ children }) {
     return res;
   };
 
-  const demoLogin = async () => {
-    const email = "shridhara.panda@vssut.ac.in";
-    const emailKey = email.toLowerCase().trim();
-    const savedUser = getUsersDb()[emailKey];
-
-    const demoUser = {
-      name: "Shridhara Panda",
-      email: email,
-      role: "Computer Science Engineering",
-      college: "VSSUT, Burla",
-      avatar: "SP",
-      projectsCount: 12,
-      connectionsCount: 86,
-      skillsCount: 24,
-      skills: ["JavaScript", "HTML", "CSS", "C++", "DSA", "React"],
-      provider: "demo",
-      // Restore previously uploaded avatar/cover
-      ...(savedUser || {})
-    };
-
-    const demoToken = 'session_' + Date.now();
-    setToken(demoToken);
-    setUser(demoUser);
-    saveUserToDb(demoUser);
-    localStorage.setItem('token', demoToken);
-    localStorage.setItem('ph_current_user', JSON.stringify(demoUser));
-    return { token: demoToken, user: demoUser };
-  };
-
   const loginWithGoogle = async (customGoogleProfile = null) => {
-    const email = customGoogleProfile?.email || "shridhara.panda@gmail.com";
+    const email = customGoogleProfile?.email || "student@example.com";
+    const displayName = customGoogleProfile?.name || email.split('@')[0].replace('.', ' ');
     const emailKey = email.toLowerCase().trim();
     const savedUser = getUsersDb()[emailKey];
 
     const googleUser = {
-      name: customGoogleProfile?.name || "Shridhara Panda",
+      name: displayName,
       email: email,
-      role: "Computer Science Student",
-      college: customGoogleProfile?.college || "VSSUT, Burla",
-      avatar: (customGoogleProfile?.name || "SP").slice(0, 2).toUpperCase(),
+      role: customGoogleProfile?.role || "Student Builder",
+      college: customGoogleProfile?.college || "Engineering College",
+      avatar: displayName.slice(0, 2).toUpperCase(),
       profilePicture: customGoogleProfile?.picture || null,
-      projectsCount: 12,
-      connectionsCount: 86,
-      skillsCount: 24,
-      skills: ["React", "JavaScript", "Python", "Node.js", "C++"],
+      projectsCount: 0,
+      connectionsCount: 1,
+      skillsCount: 3,
+      skills: ["React", "JavaScript", "Python"],
       provider: "google",
-      // Restore previously saved profile picture, cover photo, bio
+      // Restore previously saved profile picture, cover photo, bio if user signed in before
       ...(savedUser || {})
     };
 
@@ -213,10 +185,10 @@ export function AuthProvider({ children }) {
   const updateProfile = (updatedFields) => {
     setUser(prev => {
       const base = prev || {
-        name: "Shridhara Panda",
-        email: "shridhara.panda@gmail.com",
+        name: "Student Builder",
+        email: "student@example.com",
         role: "Computer Science Student",
-        college: "VSSUT, Burla"
+        college: "Engineering College"
       };
       const updated = {
         ...base,
@@ -238,8 +210,6 @@ export function AuthProvider({ children }) {
         token,
         isAuthenticated,
         login,
-        demoLogin,
-        quickDemoLogin: demoLogin,
         loginWithGoogle,
         register,
         logout,

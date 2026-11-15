@@ -104,11 +104,11 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
         mediaUrl: formData.mediaUrl || '',
         badge: formData.category,
         author: {
-          name: user?.name || 'Shridhara Panda',
+          name: user?.name || 'Student Builder',
           email: user?.email || '',
-          role: user?.role || 'Computer Science Engineering',
-          college: user?.college || 'VSSUT, Burla',
-          initials: (user?.name || 'SP').slice(0, 2).toUpperCase(),
+          role: user?.role || 'Student Builder',
+          college: user?.college || 'Engineering College',
+          initials: (user?.name || 'SB').slice(0, 2).toUpperCase(),
           avatarColor: 'purple',
           avatarImage: user?.avatarImage || user?.profilePicture || null
         },
