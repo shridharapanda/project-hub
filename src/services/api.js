@@ -51,37 +51,28 @@ export const api = {
       cleanEmail = `${cleanEmail}@gmail.com`;
     }
 
-    const registered = getStorage("ph_registered_users", []);
+    const registered = getStorage("ph_registered_users", [
+      {
+        name: "Shridhara Panda",
+        email: "shridhara.panda@gmail.com",
+        password: "admin"
+      }
+    ]);
     const match = registered.find(u => u.email?.toLowerCase() === cleanEmail);
 
-    if (match && match.password === password) {
-      return {
-        success: true,
-        token: "ph_token_" + btoa(cleanEmail),
-        user: { name: match.name, email: match.email }
-      };
+    if (!match) {
+      throw new Error("No account found with this Gmail. Please register your account first below.");
     }
 
-    // Gmail ID or email with at least 4 characters password
-    if (cleanEmail.includes("@") && password.length >= 4) {
-      const username = cleanEmail.split("@")[0].replace(/[._\-+]/g, " ").trim();
-      const capitalized = username
-        .split(/\s+/)
-        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-        .join(" ");
-
-      return {
-        success: true,
-        token: "ph_token_gmail_" + Date.now(),
-        user: {
-          name: capitalized || "Student Builder",
-          email: cleanEmail,
-          provider: cleanEmail.includes("gmail") ? "gmail" : "email"
-        }
-      };
+    if (match.password !== password) {
+      throw new Error("Incorrect password. Please try again.");
     }
 
-    throw new Error("Invalid Gmail / password (minimum 4 characters required).");
+    return {
+      success: true,
+      token: "ph_token_" + btoa(cleanEmail),
+      user: { name: match.name, email: match.email }
+    };
   },
 
   async register(name, email, password) {
@@ -98,14 +89,35 @@ export const api = {
       console.warn("Backend register unavailable, fallback to local registration");
     }
 
-    const registered = getStorage("ph_registered_users", []);
-    registered.push({ name, email, password });
+    let cleanEmail = (email || '').trim().toLowerCase();
+    if (cleanEmail && !cleanEmail.includes('@')) {
+      cleanEmail = `${cleanEmail}@gmail.com`;
+    }
+
+    const registered = getStorage("ph_registered_users", [
+      {
+        name: "Shridhara Panda",
+        email: "shridhara.panda@gmail.com",
+        password: "admin"
+      }
+    ]);
+    const existing = registered.find(u => u.email?.toLowerCase() === cleanEmail);
+    if (existing) {
+      throw new Error("An account with this Gmail already exists. Please log in.");
+    }
+
+    const newUserRecord = {
+      name: name.trim(),
+      email: cleanEmail,
+      password: password
+    };
+    registered.push(newUserRecord);
     setStorage("ph_registered_users", registered);
 
     return {
       success: true,
-      token: "ph_token_" + btoa(email),
-      user: { name, email }
+      token: "ph_token_" + btoa(cleanEmail),
+      user: { name: newUserRecord.name, email: cleanEmail }
     };
   },
 

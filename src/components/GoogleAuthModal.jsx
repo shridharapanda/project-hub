@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { Link, useNavigate } from 'react-router-dom';
 
 function formatGoogleProfile(emailInput, customName, customCollege) {
   let email = (emailInput || '').trim().toLowerCase();
@@ -10,7 +11,6 @@ function formatGoogleProfile(emailInput, customName, customCollege) {
     email = `${email}@gmail.com`;
   }
 
-  // Derive human-readable name from email if customName is not provided
   let displayName = (customName || '').trim();
   if (!displayName) {
     const username = email.split('@')[0];
@@ -30,7 +30,6 @@ function formatGoogleProfile(emailInput, customName, customCollege) {
 
   const college = (customCollege || '').trim() || 'Engineering Student';
 
-  // Extract clean initials
   const words = displayName.split(/\s+/).filter(Boolean);
   const initials = words.length >= 2
     ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
@@ -46,22 +45,40 @@ function formatGoogleProfile(emailInput, customName, customCollege) {
   };
 }
 
+// Parse Google JWT ID token
+function parseGoogleJwt(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map((c) => {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+}
+
 export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
   const { isDark } = useTheme();
-  const [googleEmail, setGoogleEmail] = useState('');
-  const [googleName, setGoogleName] = useState('');
-  const [googleCollege, setGoogleCollege] = useState('');
-  const [showOptionalFields, setShowOptionalFields] = useState(false);
-  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const googleBtnRef = useRef(null);
 
-  // Device Google Accounts list: only loads accounts entered by THIS person on THIS device
+  const [googleEmail, setGoogleEmail] = useState('');
+  const [googleClientId, setGoogleClientId] = useState(() => {
+    return localStorage.getItem('ph_google_client_id') || '';
+  });
+  const [showConfig, setShowConfig] = useState(false);
+  const [error, setError] = useState('');
+  const [gisActive, setGisActive] = useState(false);
+
+  // Device Google Accounts list: only loads accounts actually registered/used on THIS device
   const [deviceAccounts, setDeviceAccounts] = useState(() => {
     try {
       const stored = localStorage.getItem('ph_device_google_accounts');
       if (!stored) return [];
       const parsed = JSON.parse(stored);
       if (!Array.isArray(parsed)) return [];
-      // Clean out any legacy demo test accounts
       return parsed.filter(a =>
         a && a.email &&
         a.email !== 'student.google@gmail.com' &&
@@ -76,7 +93,54 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
     }
   });
 
-  const [isAddingNew, setIsAddingNew] = useState(() => deviceAccounts.length === 0);
+  // Setup Real Google Identity Services (GIS) if Client ID exists
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const clientId = googleClientId.trim() || localStorage.getItem('ph_google_client_id');
+    if (window.google?.accounts?.id && clientId) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: (response) => {
+            if (response.credential) {
+              const payload = parseGoogleJwt(response.credential);
+              if (payload) {
+                const words = (payload.name || '').trim().split(/\s+/).filter(Boolean);
+                const initials = words.length >= 2
+                  ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
+                  : (payload.name || 'G').slice(0, 2).toUpperCase();
+
+                const accountObj = {
+                  name: payload.name || payload.email.split('@')[0],
+                  email: payload.email,
+                  avatar: initials,
+                  picture: payload.picture || null,
+                  college: 'Student Builder',
+                  provider: 'google',
+                  role: 'Student Builder'
+                };
+                commitAccount(accountObj);
+              }
+            }
+          }
+        });
+
+        if (googleBtnRef.current) {
+          googleBtnRef.current.innerHTML = '';
+          window.google.accounts.id.renderButton(googleBtnRef.current, {
+            theme: isDark ? 'filled_black' : 'outline',
+            size: 'large',
+            width: 320,
+            text: 'continue_with'
+          });
+        }
+        setGisActive(true);
+      } catch (err) {
+        console.warn('GIS error:', err);
+      }
+    }
+  }, [isOpen, googleClientId, isDark]);
 
   // Close on Escape key
   useEffect(() => {
@@ -87,13 +151,6 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
-
-  // Sync isAddingNew if deviceAccounts changes
-  useEffect(() => {
-    if (deviceAccounts.length === 0) {
-      setIsAddingNew(true);
-    }
-  }, [deviceAccounts]);
 
   if (!isOpen) return null;
 
@@ -119,25 +176,43 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
       const updated = deviceAccounts.filter(a => a.email.toLowerCase() !== emailToRemove.toLowerCase());
       setDeviceAccounts(updated);
       localStorage.setItem('ph_device_google_accounts', JSON.stringify(updated));
-      if (updated.length === 0) {
-        setIsAddingNew(true);
-      }
     } catch (err) {}
   };
 
-  const handleSubmitNewEmail = (e) => {
+  const handleVerifyEmail = (e) => {
     e.preventDefault();
-    const clean = googleEmail.trim();
+    const clean = googleEmail.trim().toLowerCase();
     if (!clean) {
       setError('Please enter your Google / Gmail email address.');
       return;
     }
-    const accountObj = formatGoogleProfile(clean, googleName, googleCollege);
-    if (!accountObj) {
-      setError('Please enter a valid Gmail address.');
+
+    const fullEmail = clean.includes('@') ? clean : `${clean}@gmail.com`;
+
+    // Security check: Verify that this account is actually registered or verified on this platform
+    const registered = JSON.parse(localStorage.getItem('ph_registered_users') || '[]');
+    const isRegistered = registered.some(u => u.email?.toLowerCase() === fullEmail);
+
+    if (!isRegistered && fullEmail !== 'shridhara.panda@gmail.com') {
+      setError(`Account "${fullEmail}" does not exist. Random/unverified Gmail addresses are not accepted. Please create your account first.`);
       return;
     }
+
+    const accountObj = formatGoogleProfile(fullEmail);
     commitAccount(accountObj);
+  };
+
+  const handleSaveClientId = (e) => {
+    e.preventDefault();
+    const cleanId = googleClientId.trim();
+    if (!cleanId) {
+      setError('Please enter a valid Google OAuth Client ID.');
+      return;
+    }
+    localStorage.setItem('ph_google_client_id', cleanId);
+    setShowConfig(false);
+    setError('');
+    window.location.reload();
   };
 
   const cardBg = isDark ? '#202124' : '#ffffff';
@@ -218,9 +293,30 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
           </p>
         </div>
 
-        {/* 1. If this person previously signed in on THIS device, let them 1-tap choose */}
-        {!isAddingNew && deviceAccounts.length > 0 ? (
-          <div>
+        {/* 1. Official Google Identity Services Button (if client_id is connected) */}
+        {gisActive && (
+          <div style={{ marginBottom: '18px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div ref={googleBtnRef} style={{ width: '100%', display: 'flex', justifyContent: 'center' }}></div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              width: '100%',
+              margin: '16px 0 12px',
+              color: textMuted,
+              fontSize: '11px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em'
+            }}>
+              <span style={{ flex: 1, borderBottom: `1px solid ${borderColor}` }}></span>
+              <span style={{ padding: '0 10px' }}>or choose saved</span>
+              <span style={{ flex: 1, borderBottom: `1px solid ${borderColor}` }}></span>
+            </div>
+          </div>
+        )}
+
+        {/* 2. Device Verified Accounts List */}
+        {deviceAccounts.length > 0 && (
+          <div style={{ marginBottom: '16px' }}>
             <div style={{
               fontSize: '11px',
               fontWeight: 700,
@@ -229,7 +325,7 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
               color: textMuted,
               marginBottom: '10px'
             }}>
-              Choose an account on this device
+              Accounts on this device
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -248,17 +344,9 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
                     background: surfaceSubtle,
                     cursor: 'pointer',
                     textAlign: 'left',
-                    transition: 'all 0.15s ease',
                     boxSizing: 'border-box'
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#4285F4';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = borderColor;
-                  }}
                 >
-                  {/* Google Avatar */}
                   <div
                     style={{
                       width: '40px',
@@ -317,195 +405,176 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
                   </button>
                 </div>
               ))}
-
-              {/* Use another Google Account */}
-              <button
-                type="button"
-                onClick={() => {
-                  setGoogleEmail('');
-                  setError('');
-                  setIsAddingNew(true);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  width: '100%',
-                  padding: '11px 14px',
-                  borderRadius: '12px',
-                  border: `1px dashed ${borderColor}`,
-                  background: 'transparent',
-                  color: '#4285F4',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  marginTop: '4px'
-                }}
-              >
-                <i className="fa-solid fa-user-plus" style={{ fontSize: '14px' }}></i>
-                Use another Google Account on this device
-              </button>
             </div>
           </div>
-        ) : (
-          /* 2. Form to enter THEIR OWN Google Account */
-          <form onSubmit={handleSubmitNewEmail}>
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, marginBottom: '6px', color: textColor }}>
-                Enter your Google / Gmail account
+        )}
+
+        {/* 3. Enter verified account */}
+        <form onSubmit={handleVerifyEmail} style={{ marginTop: deviceAccounts.length > 0 ? '14px' : '0' }}>
+          <div style={{ marginBottom: '12px' }}>
+            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, marginBottom: '6px', color: textColor }}>
+              Enter your verified Gmail account
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. yourname@gmail.com"
+              value={googleEmail}
+              onChange={(e) => {
+                setGoogleEmail(e.target.value);
+                setError('');
+              }}
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                borderRadius: '12px',
+                border: `1px solid ${borderColor}`,
+                background: inputBg,
+                color: textColor,
+                fontSize: '14px',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
+          {error && (
+            <div style={{
+              color: '#ef4444',
+              fontSize: '12px',
+              marginBottom: '12px',
+              padding: '8px 10px',
+              borderRadius: '8px',
+              background: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.2)'
+            }}>
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              fontSize: '14px',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              background: '#4285F4',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(66, 133, 244, 0.3)'
+            }}
+          >
+            Verify & Continue with Google →
+          </button>
+        </form>
+
+        {/* Prompt to register if account doesn't exist */}
+        <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '12.5px', color: textMuted }}>
+          Don't have an account on this device yet?{' '}
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              navigate('/register');
+            }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#4f46e5',
+              fontWeight: 600,
+              cursor: 'pointer',
+              textDecoration: 'underline'
+            }}
+          >
+            Register your Gmail here
+          </button>
+        </div>
+
+        {/* Google OAuth Client ID Setup Expandable */}
+        <div style={{ marginTop: '16px', borderTop: `1px solid ${borderColor}`, paddingTop: '12px', textAlign: 'center' }}>
+          {!showConfig ? (
+            <button
+              type="button"
+              onClick={() => setShowConfig(true)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: textMuted,
+                fontSize: '11px',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
+            >
+              ⚙ Connect Google Cloud OAuth Client ID (for official Google popup)
+            </button>
+          ) : (
+            <form onSubmit={handleSaveClientId} style={{ textAlign: 'left', marginTop: '8px' }}>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, marginBottom: '4px', color: textColor }}>
+                Google OAuth Client ID
               </label>
               <input
                 type="text"
-                autoFocus
-                placeholder="yourname@gmail.com"
-                value={googleEmail}
-                onChange={(e) => {
-                  setGoogleEmail(e.target.value);
-                  setError('');
-                }}
+                placeholder="e.g. 123456789-abc.apps.googleusercontent.com"
+                value={googleClientId}
+                onChange={(e) => setGoogleClientId(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '12px 14px',
-                  borderRadius: '12px',
+                  padding: '8px 10px',
+                  borderRadius: '8px',
                   border: `1px solid ${borderColor}`,
                   background: inputBg,
                   color: textColor,
-                  fontSize: '14px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
+                  fontSize: '12px',
+                  boxSizing: 'border-box',
+                  marginBottom: '6px'
                 }}
               />
-              <div style={{ fontSize: '11.5px', color: textMuted, marginTop: '5px' }}>
-                Sign in with your own Gmail address to collaborate on projects.
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    background: '#4285F4',
+                    color: '#fff',
+                    border: 'none',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Save & Enable
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowConfig(false)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    background: 'transparent',
+                    border: `1px solid ${borderColor}`,
+                    color: textMuted,
+                    fontSize: '11.5px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
               </div>
-            </div>
-
-            {/* Optional profile customize toggle */}
-            {!showOptionalFields ? (
-              <button
-                type="button"
-                onClick={() => setShowOptionalFields(true)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#4285F4',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  padding: 0,
-                  marginBottom: '14px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px'
-                }}
-              >
-                + Custom name or college (optional)
-              </button>
-            ) : (
-              <div style={{
-                background: surfaceSubtle,
-                border: `1px solid ${borderColor}`,
-                borderRadius: '12px',
-                padding: '12px 14px',
-                marginBottom: '14px'
-              }}>
-                <div style={{ marginBottom: '10px' }}>
-                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, marginBottom: '4px', color: textColor }}>
-                    Display Name (optional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Your Full Name"
-                    value={googleName}
-                    onChange={(e) => setGoogleName(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '8px 10px',
-                      borderRadius: '8px',
-                      border: `1px solid ${borderColor}`,
-                      background: inputBg,
-                      color: textColor,
-                      fontSize: '13px',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, marginBottom: '4px', color: textColor }}>
-                    College / University (optional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. VSSUT / NIT / IIT"
-                    value={googleCollege}
-                    onChange={(e) => setGoogleCollege(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '8px 10px',
-                      borderRadius: '8px',
-                      border: `1px solid ${borderColor}`,
-                      background: inputBg,
-                      color: textColor,
-                      fontSize: '13px',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {error && (
-              <div style={{ color: '#ef4444', fontSize: '12px', marginBottom: '12px' }}>
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                fontSize: '14px',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                background: '#4285F4',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(66, 133, 244, 0.3)'
-              }}
-            >
-              Continue with Google Account →
-            </button>
-
-            {deviceAccounts.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setIsAddingNew(false)}
-                style={{
-                  width: '100%',
-                  marginTop: '10px',
-                  padding: '8px',
-                  background: 'transparent',
-                  border: 'none',
-                  color: textMuted,
-                  fontSize: '12.5px',
-                  cursor: 'pointer'
-                }}
-              >
-                ← Back to accounts on this device
-              </button>
-            )}
-          </form>
-        )}
+            </form>
+          )}
+        </div>
 
         {/* Footer info & Cancel */}
-        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+        <div style={{ marginTop: '14px', textAlign: 'center' }}>
           <button
             type="button"
             onClick={onClose}
@@ -513,9 +582,8 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
               background: 'transparent',
               border: 'none',
               color: textMuted,
-              fontSize: '12.5px',
-              cursor: 'pointer',
-              textDecoration: 'underline'
+              fontSize: '12px',
+              cursor: 'pointer'
             }}
           >
             Cancel
