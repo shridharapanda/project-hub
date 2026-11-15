@@ -1,20 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 
-const DEFAULT_DEVICE_ACCOUNT = {
-  name: 'Shridhara Panda',
-  email: 'shridhara.panda@gmail.com',
-  avatar: 'SP',
-  college: 'VSSUT, Burla',
-  role: 'Student Builder & Founder',
-  isDeviceAccount: true,
-  provider: 'google'
-};
-
 function formatGoogleProfile(emailInput, customName, customCollege) {
   let email = (emailInput || '').trim().toLowerCase();
   if (!email) {
-    return DEFAULT_DEVICE_ACCOUNT;
+    return null;
   }
   if (!email.includes('@')) {
     email = `${email}@gmail.com`;
@@ -56,36 +46,23 @@ function formatGoogleProfile(emailInput, customName, customCollege) {
   };
 }
 
-// Parse Google JWT ID token
-function parseGoogleJwt(token) {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map((c) => {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    return JSON.parse(jsonPayload);
-  } catch (e) {
-    return null;
-  }
-}
-
 export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
   const { isDark } = useTheme();
   const [googleEmail, setGoogleEmail] = useState('');
-  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [googleName, setGoogleName] = useState('');
+  const [googleCollege, setGoogleCollege] = useState('');
+  const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [error, setError] = useState('');
 
-  // Device Google Accounts list
+  // Device Google Accounts list: only loads accounts entered by THIS person on THIS device
   const [deviceAccounts, setDeviceAccounts] = useState(() => {
     try {
       const stored = localStorage.getItem('ph_device_google_accounts');
-      let accounts = [];
-      if (stored) {
-        accounts = JSON.parse(stored) || [];
-      }
-      // Purge any fake test accounts
-      accounts = accounts.filter(a =>
+      if (!stored) return [];
+      const parsed = JSON.parse(stored);
+      if (!Array.isArray(parsed)) return [];
+      // Clean out any legacy demo test accounts
+      return parsed.filter(a =>
         a && a.email &&
         a.email !== 'student.google@gmail.com' &&
         a.email !== 'student.builder@gmail.com' &&
@@ -94,55 +71,12 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
         !a.name?.toLowerCase().includes('demo student') &&
         !a.name?.toLowerCase().includes('student builder')
       );
-
-      // Ensure Shridhara Panda is always top primary device account
-      const otherAccounts = accounts.filter(a => a.email.toLowerCase() !== DEFAULT_DEVICE_ACCOUNT.email.toLowerCase());
-      const finalized = [DEFAULT_DEVICE_ACCOUNT, ...otherAccounts].slice(0, 5);
-      localStorage.setItem('ph_device_google_accounts', JSON.stringify(finalized));
-      return finalized;
     } catch (e) {
-      return [DEFAULT_DEVICE_ACCOUNT];
+      return [];
     }
   });
 
-  // Check for native Google Identity Services (GIS)
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const clientId = localStorage.getItem('ph_google_client_id');
-    if (window.google?.accounts?.id && clientId) {
-      try {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: (response) => {
-            if (response.credential) {
-              const payload = parseGoogleJwt(response.credential);
-              if (payload) {
-                const words = (payload.name || '').trim().split(/\s+/).filter(Boolean);
-                const initials = words.length >= 2
-                  ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
-                  : (payload.name || 'G').slice(0, 2).toUpperCase();
-
-                const accountObj = {
-                  name: payload.name || payload.email.split('@')[0],
-                  email: payload.email,
-                  avatar: initials,
-                  picture: payload.picture || null,
-                  college: 'Student Builder',
-                  provider: 'google',
-                  role: 'Student Builder'
-                };
-                commitAccount(accountObj);
-              }
-            }
-          }
-        });
-        window.google.accounts.id.prompt();
-      } catch (err) {
-        console.warn('GIS prompt unavailable:', err);
-      }
-    }
-  }, [isOpen]);
+  const [isAddingNew, setIsAddingNew] = useState(() => deviceAccounts.length === 0);
 
   // Close on Escape key
   useEffect(() => {
@@ -153,6 +87,13 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  // Sync isAddingNew if deviceAccounts changes
+  useEffect(() => {
+    if (deviceAccounts.length === 0) {
+      setIsAddingNew(true);
+    }
+  }, [deviceAccounts]);
 
   if (!isOpen) return null;
 
@@ -172,6 +113,18 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
     commitAccount(acc);
   };
 
+  const handleRemoveAccount = (e, emailToRemove) => {
+    e.stopPropagation();
+    try {
+      const updated = deviceAccounts.filter(a => a.email.toLowerCase() !== emailToRemove.toLowerCase());
+      setDeviceAccounts(updated);
+      localStorage.setItem('ph_device_google_accounts', JSON.stringify(updated));
+      if (updated.length === 0) {
+        setIsAddingNew(true);
+      }
+    } catch (err) {}
+  };
+
   const handleSubmitNewEmail = (e) => {
     e.preventDefault();
     const clean = googleEmail.trim();
@@ -179,7 +132,11 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
       setError('Please enter your Google / Gmail email address.');
       return;
     }
-    const accountObj = formatGoogleProfile(clean);
+    const accountObj = formatGoogleProfile(clean, googleName, googleCollege);
+    if (!accountObj) {
+      setError('Please enter a valid Gmail address.');
+      return;
+    }
     commitAccount(accountObj);
   };
 
@@ -254,15 +211,15 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
           </svg>
           <h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0, color: textColor }}>
-            Choose a Google Account
+            Sign in with Google
           </h2>
           <p style={{ fontSize: '13px', color: textMuted, marginTop: '4px', marginBottom: 0 }}>
             to continue to <strong>Student Project Hub</strong>
           </p>
         </div>
 
-        {/* List of Device Google Accounts */}
-        {!isAddingNew ? (
+        {/* 1. If this person previously signed in on THIS device, let them 1-tap choose */}
+        {!isAddingNew && deviceAccounts.length > 0 ? (
           <div>
             <div style={{
               fontSize: '11px',
@@ -272,14 +229,13 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
               color: textMuted,
               marginBottom: '10px'
             }}>
-              Google Accounts on this device
+              Choose an account on this device
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {deviceAccounts.map((acc, idx) => (
-                <button
+                <div
                   key={idx}
-                  type="button"
                   onClick={() => handleChooseAccount(acc)}
                   style={{
                     display: 'flex',
@@ -293,15 +249,13 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
                     cursor: 'pointer',
                     textAlign: 'left',
                     transition: 'all 0.15s ease',
-                    position: 'relative'
+                    boxSizing: 'border-box'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = '#4285F4';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.borderColor = borderColor;
-                    e.currentTarget.style.transform = 'none';
                   }}
                 >
                   {/* Google Avatar */}
@@ -317,8 +271,7 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
                       justifyContent: 'center',
                       fontSize: '14px',
                       fontWeight: 700,
-                      flexShrink: 0,
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+                      flexShrink: 0
                     }}
                   >
                     {acc.avatar || acc.name.slice(0, 2).toUpperCase()}
@@ -346,24 +299,33 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
                     </div>
                   </div>
 
-                  <div style={{
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    padding: '3px 8px',
-                    borderRadius: '12px',
-                    background: 'rgba(66, 133, 244, 0.1)',
-                    color: '#4285F4',
-                    flexShrink: 0
-                  }}>
-                    Continue →
-                  </div>
-                </button>
+                  <button
+                    type="button"
+                    onClick={(e) => handleRemoveAccount(e, acc.email)}
+                    title="Remove from this device"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: textMuted,
+                      cursor: 'pointer',
+                      padding: '4px 6px',
+                      fontSize: '12px',
+                      borderRadius: '4px'
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
               ))}
 
               {/* Use another Google Account */}
               <button
                 type="button"
-                onClick={() => setIsAddingNew(true)}
+                onClick={() => {
+                  setGoogleEmail('');
+                  setError('');
+                  setIsAddingNew(true);
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -386,9 +348,9 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
             </div>
           </div>
         ) : (
-          /* Use Another Google Account Form */
+          /* 2. Form to enter THEIR OWN Google Account */
           <form onSubmit={handleSubmitNewEmail}>
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '14px' }}>
               <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, marginBottom: '6px', color: textColor }}>
                 Enter your Google / Gmail account
               </label>
@@ -414,9 +376,84 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
                 }}
               />
               <div style={{ fontSize: '11.5px', color: textMuted, marginTop: '5px' }}>
-                You will be signed in with this Google account on this device.
+                Sign in with your own Gmail address to collaborate on projects.
               </div>
             </div>
+
+            {/* Optional profile customize toggle */}
+            {!showOptionalFields ? (
+              <button
+                type="button"
+                onClick={() => setShowOptionalFields(true)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#4285F4',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: 0,
+                  marginBottom: '14px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px'
+                }}
+              >
+                + Custom name or college (optional)
+              </button>
+            ) : (
+              <div style={{
+                background: surfaceSubtle,
+                border: `1px solid ${borderColor}`,
+                borderRadius: '12px',
+                padding: '12px 14px',
+                marginBottom: '14px'
+              }}>
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, marginBottom: '4px', color: textColor }}>
+                    Display Name (optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Your Full Name"
+                    value={googleName}
+                    onChange={(e) => setGoogleName(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: `1px solid ${borderColor}`,
+                      background: inputBg,
+                      color: textColor,
+                      fontSize: '13px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, marginBottom: '4px', color: textColor }}>
+                    College / University (optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. VSSUT / NIT / IIT"
+                    value={googleCollege}
+                    onChange={(e) => setGoogleCollege(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: `1px solid ${borderColor}`,
+                      background: inputBg,
+                      color: textColor,
+                      fontSize: '13px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
 
             {error && (
               <div style={{ color: '#ef4444', fontSize: '12px', marginBottom: '12px' }}>
@@ -443,25 +480,27 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelectAccount }) {
                 boxShadow: '0 4px 12px rgba(66, 133, 244, 0.3)'
               }}
             >
-              Continue with this Google Account →
+              Continue with Google Account →
             </button>
 
-            <button
-              type="button"
-              onClick={() => setIsAddingNew(false)}
-              style={{
-                width: '100%',
-                marginTop: '10px',
-                padding: '8px',
-                background: 'transparent',
-                border: 'none',
-                color: textMuted,
-                fontSize: '12.5px',
-                cursor: 'pointer'
-              }}
-            >
-              ← Back to Google accounts on this device
-            </button>
+            {deviceAccounts.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsAddingNew(false)}
+                style={{
+                  width: '100%',
+                  marginTop: '10px',
+                  padding: '8px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: textMuted,
+                  fontSize: '12.5px',
+                  cursor: 'pointer'
+                }}
+              >
+                ← Back to accounts on this device
+              </button>
+            )}
           </form>
         )}
 
