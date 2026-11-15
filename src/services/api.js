@@ -29,95 +29,215 @@ function setStorage(key, value) {
 }
 
 export const api = {
-  // Authentication
-  async login(email, password) {
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return data;
-      }
-    } catch (e) {
-      console.warn("Backend login unavailable, fallback to local authentication");
-    }
+  // Authentication: Name & Password login with Phone OTP verification
+  async login(identifier, password) {
+    const cleanId = (identifier || '').trim().toLowerCase();
+    const cleanPhoneDigits = (identifier || '').replace(/\D/g, '');
 
-    // Local authentication fallback
-    let cleanEmail = (email || '').trim().toLowerCase();
-    if (cleanEmail && !cleanEmail.includes('@')) {
-      cleanEmail = `${cleanEmail}@gmail.com`;
+    if (!cleanId) {
+      throw new Error("Please enter your Name or Phone number.");
+    }
+    if (!password) {
+      throw new Error("Please enter your password.");
     }
 
     const registered = getStorage("ph_registered_users", [
       {
         name: "Shridhara Panda",
-        email: "shridhara.panda@gmail.com",
+        phone: "9876543210",
+        college: "VSSUT, Burla",
         password: "admin"
       }
     ]);
-    const match = registered.find(u => u.email?.toLowerCase() === cleanEmail);
+
+    // Match by Name (case-insensitive) OR Phone (clean digits) OR Email
+    const match = registered.find(u =>
+      (u.name && u.name.trim().toLowerCase() === cleanId) ||
+      (u.phone && cleanPhoneDigits && u.phone.replace(/\D/g, '').endsWith(cleanPhoneDigits.slice(-10))) ||
+      (u.email && u.email.trim().toLowerCase() === cleanId)
+    );
 
     if (!match) {
-      throw new Error("No account found with this Gmail. Please register your account first below.");
+      throw new Error(`No account found for "${identifier}". Please register first below.`);
     }
 
     if (match.password !== password) {
-      throw new Error("Incorrect password. Please try again.");
+      throw new Error("Incorrect password. If you forgot your password, verify using your Phone OTP below.");
     }
 
     return {
       success: true,
-      token: "ph_token_" + btoa(cleanEmail),
-      user: { name: match.name, email: match.email }
+      token: "ph_token_" + btoa(match.name + "_" + Date.now()),
+      user: {
+        name: match.name,
+        phone: match.phone,
+        college: match.college || "Engineering Student"
+      }
     };
   },
 
-  async register(name, email, password) {
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password })
-      });
-      if (res.ok) {
-        return await res.json();
-      }
-    } catch (e) {
-      console.warn("Backend register unavailable, fallback to local registration");
+  async sendPhoneOtp(phoneNumber) {
+    const cleanDigits = (phoneNumber || '').replace(/\D/g, '');
+    if (!cleanDigits || cleanDigits.length < 10) {
+      throw new Error("Please enter a valid 10-digit mobile phone number.");
     }
 
-    let cleanEmail = (email || '').trim().toLowerCase();
-    if (cleanEmail && !cleanEmail.includes('@')) {
-      cleanEmail = `${cleanEmail}@gmail.com`;
+    const targetPhone = cleanDigits.slice(-10);
+
+    const registered = getStorage("ph_registered_users", [
+      {
+        name: "Shridhara Panda",
+        phone: "9876543210",
+        college: "VSSUT, Burla",
+        password: "admin"
+      }
+    ]);
+
+    const match = registered.find(u =>
+      u.phone && u.phone.replace(/\D/g, '').endsWith(targetPhone)
+    );
+
+    if (!match) {
+      throw new Error(`No registered account found with phone number ${targetPhone}. Please check your number or register.`);
+    }
+
+    // Generate random 6-digit OTP
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Store in storage with 5 minute expiration
+    const otpData = {
+      phone: targetPhone,
+      code: generatedOtp,
+      expiresAt: Date.now() + 5 * 60 * 1000
+    };
+    setStorage("ph_active_otp", otpData);
+
+    return {
+      success: true,
+      phone: targetPhone,
+      otp: generatedOtp,
+      name: match.name
+    };
+  },
+
+  async verifyOtpAndResetPassword(phoneNumber, otpCode, newPassword) {
+    const cleanDigits = (phoneNumber || '').replace(/\D/g, '');
+    const targetPhone = cleanDigits.slice(-10);
+
+    if (!otpCode || otpCode.trim().length !== 6) {
+      throw new Error("Please enter the complete 6-digit OTP.");
+    }
+    if (!newPassword || newPassword.length < 4) {
+      throw new Error("New password must be at least 4 characters.");
+    }
+
+    const activeOtp = getStorage("ph_active_otp", null);
+    if (!activeOtp || activeOtp.phone !== targetPhone) {
+      throw new Error("No active OTP request found for this phone number. Please request a new OTP.");
+    }
+
+    if (Date.now() > activeOtp.expiresAt) {
+      throw new Error("The OTP has expired (valid for 5 minutes). Please request a new OTP.");
+    }
+
+    if (activeOtp.code !== otpCode.trim()) {
+      throw new Error("Incorrect OTP code. Please check the code and try again.");
+    }
+
+    // OTP verified! Update password in registered users list
+    const registered = getStorage("ph_registered_users", [
+      {
+        name: "Shridhara Panda",
+        phone: "9876543210",
+        college: "VSSUT, Burla",
+        password: "admin"
+      }
+    ]);
+
+    const userIndex = registered.findIndex(u =>
+      u.phone && u.phone.replace(/\D/g, '').endsWith(targetPhone)
+    );
+
+    if (userIndex === -1) {
+      throw new Error("Account not found. Please register.");
+    }
+
+    registered[userIndex].password = newPassword;
+    setStorage("ph_registered_users", registered);
+
+    // Clear active OTP
+    localStorage.removeItem("ph_active_otp");
+
+    const updatedUser = registered[userIndex];
+    return {
+      success: true,
+      token: "ph_token_" + btoa(updatedUser.name + "_" + Date.now()),
+      user: {
+        name: updatedUser.name,
+        phone: updatedUser.phone,
+        college: updatedUser.college || "Engineering Student"
+      }
+    };
+  },
+
+  async register(name, phone, password, college) {
+    const cleanName = (name || '').trim();
+    const cleanPhoneDigits = (phone || '').replace(/\D/g, '');
+
+    if (!cleanName || cleanName.length < 2) {
+      throw new Error("Please enter your full name (minimum 2 characters).");
+    }
+
+    if (!cleanPhoneDigits || cleanPhoneDigits.length < 10) {
+      throw new Error("Please enter a valid 10-digit mobile phone number (used for password OTP verification).");
+    }
+
+    const targetPhone = cleanPhoneDigits.slice(-10);
+
+    if (!password || password.length < 4) {
+      throw new Error("Password must be at least 4 characters.");
     }
 
     const registered = getStorage("ph_registered_users", [
       {
         name: "Shridhara Panda",
-        email: "shridhara.panda@gmail.com",
+        phone: "9876543210",
+        college: "VSSUT, Burla",
         password: "admin"
       }
     ]);
-    const existing = registered.find(u => u.email?.toLowerCase() === cleanEmail);
+
+    // Check if phone or name is already registered
+    const existing = registered.find(u =>
+      (u.phone && u.phone.replace(/\D/g, '').endsWith(targetPhone)) ||
+      (u.name && u.name.trim().toLowerCase() === cleanName.toLowerCase())
+    );
+
     if (existing) {
-      throw new Error("An account with this Gmail already exists. Please log in.");
+      if (existing.name.trim().toLowerCase() === cleanName.toLowerCase()) {
+        throw new Error(`An account named "${cleanName}" is already registered. Please log in with your password.`);
+      }
+      throw new Error(`An account is already linked with phone number ${targetPhone}. Please log in or use Forgot Password.`);
     }
 
     const newUserRecord = {
-      name: name.trim(),
-      email: cleanEmail,
+      name: cleanName,
+      phone: targetPhone,
+      college: (college || '').trim() || "Engineering Student",
       password: password
     };
+
     registered.push(newUserRecord);
     setStorage("ph_registered_users", registered);
 
     return {
       success: true,
-      token: "ph_token_" + btoa(cleanEmail),
-      user: { name: newUserRecord.name, email: cleanEmail }
+      token: "ph_token_" + btoa(cleanName + "_" + Date.now()),
+      user: {
+        name: newUserRecord.name,
+        phone: newUserRecord.phone,
+        college: newUserRecord.college
+      }
     };
   },
 

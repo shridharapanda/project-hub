@@ -88,13 +88,13 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
-  const login = async (email, password) => {
-    const res = await api.login(email, password);
+  const login = async (identifier, password) => {
+    const res = await api.login(identifier, password);
     setToken(res.token);
 
-    const emailKey = (res.user?.email || email).toLowerCase().trim();
-    const savedUser = getUsersDb()[emailKey];
-    const displayName = res.user?.name || email.split('@')[0];
+    const displayName = res.user?.name || identifier;
+    const nameKey = displayName.toLowerCase().trim();
+    const savedUser = getUsersDb()[nameKey];
 
     const words = displayName.trim().split(/\s+/).filter(Boolean);
     const computedAvatar = words.length >= 2
@@ -103,13 +103,12 @@ export function AuthProvider({ children }) {
 
     const loggedUser = {
       name: displayName,
-      email: res.user?.email || email,
+      phone: res.user?.phone || "",
+      email: res.user?.email || `${nameKey.replace(/\s+/g, '.')}@student.hub`,
       role: "Student Builder",
-      college: savedUser?.college || "Engineering Student",
+      college: res.user?.college || savedUser?.college || "Engineering Student",
       skills: ["JavaScript", "React", "Node.js", "Python"],
-      provider: emailKey.includes("gmail") ? "gmail" : "email",
       avatar: computedAvatar,
-      // Restore previously saved customizations if they exist!
       ...(savedUser || {})
     };
 
@@ -119,58 +118,60 @@ export function AuthProvider({ children }) {
     return res;
   };
 
-  const loginWithGoogle = async (customGoogleProfile = null) => {
-    const email = customGoogleProfile?.email || "student.innovator@gmail.com";
-    const displayName = customGoogleProfile?.name || email.split('@')[0].replace('.', ' ');
-    const emailKey = email.toLowerCase().trim();
-    const savedUser = getUsersDb()[emailKey];
+  const sendPhoneOtp = async (phone) => {
+    return await api.sendPhoneOtp(phone);
+  };
+
+  const verifyOtpAndResetPassword = async (phone, otp, newPassword) => {
+    const res = await api.verifyOtpAndResetPassword(phone, otp, newPassword);
+    setToken(res.token);
+
+    const displayName = res.user?.name || "Student Builder";
+    const nameKey = displayName.toLowerCase().trim();
+    const savedUser = getUsersDb()[nameKey];
 
     const words = displayName.trim().split(/\s+/).filter(Boolean);
     const computedAvatar = words.length >= 2
       ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
       : displayName.slice(0, 2).toUpperCase();
 
-    const googleUser = {
+    const loggedUser = {
       name: displayName,
-      email: email,
-      role: customGoogleProfile?.role || "Student Builder",
-      college: customGoogleProfile?.college || "Engineering Student",
-      avatar: customGoogleProfile?.avatar || computedAvatar,
-      profilePicture: customGoogleProfile?.picture || null,
-      skills: ["React", "JavaScript", "Python"],
-      provider: "google",
-      // Restore previously saved profile picture, cover photo, bio if user signed in before
+      phone: res.user?.phone || phone,
+      email: res.user?.email || `${nameKey.replace(/\s+/g, '.')}@student.hub`,
+      role: "Student Builder",
+      college: res.user?.college || savedUser?.college || "Engineering Student",
+      skills: ["JavaScript", "React", "Node.js", "Python"],
+      avatar: computedAvatar,
       ...(savedUser || {})
     };
 
-    const googleToken = 'google_jwt_' + Date.now();
-    setToken(googleToken);
-    setUser(googleUser);
-    saveUserToDb(googleUser);
-    localStorage.setItem('token', googleToken);
-    localStorage.setItem('ph_current_user', JSON.stringify(googleUser));
-    return { token: googleToken, user: googleUser };
+    setUser(loggedUser);
+    saveUserToDb(loggedUser);
+    localStorage.setItem('ph_current_user', JSON.stringify(loggedUser));
+    return res;
   };
 
-  const register = async (name, email, password, college = "Engineering Student") => {
-    const res = await api.register(name, email, password);
+  const register = async (name, phone, password, college = "Engineering Student") => {
+    const res = await api.register(name, phone, password, college);
     setToken(res.token);
 
-    const emailKey = email.toLowerCase().trim();
-    const savedUser = getUsersDb()[emailKey];
+    const displayName = res.user?.name || name;
+    const nameKey = displayName.toLowerCase().trim();
+    const savedUser = getUsersDb()[nameKey];
 
-    const words = name.trim().split(/\s+/).filter(Boolean);
+    const words = displayName.trim().split(/\s+/).filter(Boolean);
     const computedAvatar = words.length >= 2
       ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
-      : name.slice(0, 2).toUpperCase();
+      : displayName.slice(0, 2).toUpperCase();
 
     const newUser = {
-      name: name,
-      email: email,
+      name: displayName,
+      phone: res.user?.phone || phone,
+      email: `${nameKey.replace(/\s+/g, '.')}@student.hub`,
       role: "Student Innovator",
       college: college || "Engineering Student",
       skills: ["JavaScript", "HTML/CSS", "Python"],
-      provider: emailKey.includes("gmail") ? "gmail" : "email",
       avatar: computedAvatar,
       ...(savedUser || {})
     };
@@ -219,7 +220,8 @@ export function AuthProvider({ children }) {
         token,
         isAuthenticated,
         login,
-        loginWithGoogle,
+        sendPhoneOtp,
+        verifyOtpAndResetPassword,
         register,
         logout,
         updateProfile
