@@ -143,11 +143,32 @@ export default function MessagesPage() {
     }, 1500);
   };
 
-  const onlineUsers = [
-    { id: '1', name: 'Aditya', avatar: 'AS', color: 'purple' },
-    { id: '2', name: 'Priya', avatar: 'PS', color: 'cyan' },
-    { id: '3', name: 'Rahul', avatar: 'RK', color: 'pink' }
-  ];
+  const onlineUsers = (() => {
+    try {
+      const usersDb = JSON.parse(localStorage.getItem('ph_users_db') || '{}');
+      const myEmail = (user?.email || '').toLowerCase().trim();
+      const myName = (user?.name || '').toLowerCase().trim();
+      const banned = ['aditya', 'priya', 'rahul', 'alex chen', 'ananya sharma'];
+
+      return Object.values(usersDb)
+        .filter(u => {
+          if (!u || !u.name) return false;
+          const uEmail = (u.email || '').toLowerCase().trim();
+          const uName = (u.name || '').toLowerCase().trim();
+          if ((myEmail && uEmail === myEmail) || (myName && uName === myName)) return false;
+          return !banned.some(b => uName.includes(b));
+        })
+        .map((u, idx) => ({
+          id: u.id || 'usr-' + idx,
+          name: u.name.split(' ')[0],
+          avatar: u.avatar || u.name.slice(0, 2).toUpperCase(),
+          color: 'purple',
+          avatarImage: u.avatarImage || u.profilePicture || null
+        }));
+    } catch (e) {
+      return [];
+    }
+  })();
 
   const filteredConversations = conversations.filter(c => {
     const query = search.toLowerCase().trim();
@@ -230,24 +251,26 @@ export default function MessagesPage() {
         </div>
 
         {/* ONLINE USERS */}
-        <div className="online-section">
-          <h3>Active now</h3>
-          <div className="online-users" id="onlineUsers">
-            {onlineUsers.map(u => (
-              <button
-                key={u.id}
-                className="online-user"
-                onClick={() => handleSelectChat(u.id)}
-              >
-                <div className="avatar-wrap">
-                  <div className={`avatar ${u.color}`}>{u.avatar}</div>
-                  <span className="online-dot"></span>
-                </div>
-                <span>{u.name}</span>
-              </button>
-            ))}
+        {onlineUsers.length > 0 && (
+          <div className="online-section">
+            <h3>Active now</h3>
+            <div className="online-users" id="onlineUsers">
+              {onlineUsers.map(u => (
+                <button
+                  key={u.id}
+                  className="online-user"
+                  onClick={() => handleSelectChat(u.id)}
+                >
+                  <div className="avatar-wrap">
+                    <div className={`avatar ${u.color}`}>{u.avatar}</div>
+                    <span className="online-dot"></span>
+                  </div>
+                  <span>{u.name}</span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* RECENT MESSAGES */}
         <div className="chat-list-header">
@@ -256,33 +279,43 @@ export default function MessagesPage() {
         </div>
 
         <div className="chat-list" id="chatList">
-          {filteredConversations.map(c => {
-            const isActive = c.id === activeChatId;
-            return (
-              <button
-                key={c.id}
-                className={`chat-user ${isActive ? 'active' : ''}`}
-                onClick={() => handleSelectChat(c.id)}
-              >
-                <div className="avatar-wrap">
-                  <div className={`avatar ${c.user.color || 'purple'}`}>
-                    {c.user.avatar}
+          {conversations.length === 0 ? (
+            <div style={{ padding: '36px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+              <span style={{ fontSize: '30px', display: 'block', marginBottom: '8px' }}>💬</span>
+              <p style={{ margin: 0, fontSize: '13px', fontWeight: 600 }}>No conversations yet</p>
+              <p style={{ margin: '6px 0 0', fontSize: '12px', color: 'var(--muted)' }}>
+                Collaborate on campus projects or connect with builders to start messaging!
+              </p>
+            </div>
+          ) : (
+            filteredConversations.map(c => {
+              const isActive = c.id === activeChatId;
+              return (
+                <button
+                  key={c.id}
+                  className={`chat-user ${isActive ? 'active' : ''}`}
+                  onClick={() => handleSelectChat(c.id)}
+                >
+                  <div className="avatar-wrap">
+                    <div className={`avatar ${c.user.color || 'purple'}`}>
+                      {c.user.avatar}
+                    </div>
+                    {c.user.online && <span className="online-dot"></span>}
                   </div>
-                  {c.user.online && <span className="online-dot"></span>}
-                </div>
 
-                <div className="chat-info">
-                  <div className="chat-name">
-                    <strong>{c.user.name}</strong>
-                    <span className="chat-time">{c.time}</span>
+                  <div className="chat-info">
+                    <div className="chat-name">
+                      <strong>{c.user.name}</strong>
+                      <span className="chat-time">{c.time}</span>
+                    </div>
+                    <div className="chat-preview">{c.lastMessage}</div>
                   </div>
-                  <div className="chat-preview">{c.lastMessage}</div>
-                </div>
 
-                {Boolean(c.unread) && <span className="unread-count">{c.unread}</span>}
-              </button>
-            );
-          })}
+                  {Boolean(c.unread) && <span className="unread-count">{c.unread}</span>}
+                </button>
+              );
+            })
+          )}
         </div>
       </aside>
 

@@ -10,9 +10,11 @@ export function NotificationProvider({ children }) {
   const [notifications, setNotifications] = useState(() => {
     try {
       const stored = localStorage.getItem('ph_notifications');
-      return stored ? JSON.parse(stored) : initialNotifications;
+      const list = stored ? JSON.parse(stored) : initialNotifications;
+      const banned = ['ananya sharma', 'alex chen'];
+      return (list || []).filter(n => !banned.some(b => (n.description || '').toLowerCase().includes(b) || (n.fromName || '').toLowerCase().includes(b)));
     } catch (e) {
-      return initialNotifications;
+      return [];
     }
   });
 

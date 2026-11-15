@@ -182,6 +182,36 @@ export const api = {
     if (hasAdded) {
       setStorage("ph_projects", list);
     }
+
+    // Sanitize any legacy random names and comments from projects
+    const nameReplacements = {
+      'priya sahoo': { name: 'VSSUT IoT & Smart Systems Lab', role: 'IoT & Embedded Engineers' },
+      'alex chen': { name: 'Campus Open Source Collective', role: 'Full-Stack Web Devs' },
+      'debashis mohapatra': { name: 'IIT BBS Cybersecurity Lab', role: 'Network & Security Researchers' },
+      'subham mohanty': { name: 'NIT Rourkela Drone & AI Lab', role: 'Automation & UAV Engineers' },
+      'rohan kulkarni': { name: 'BITS CleanTech Research Group', role: 'Smart Grid & Energy Systems' }
+    };
+
+    const bannedCommenters = ['alex chen', 'rahul das', 'ananya sharma', 'neha verma', 'debashis mohapatra', 'priya sahoo'];
+
+    list = list.map(p => {
+      const lowerAuthor = (p.author?.name || '').toLowerCase().trim();
+      let updatedAuthor = p.author;
+      if (nameReplacements[lowerAuthor]) {
+        updatedAuthor = {
+          ...p.author,
+          name: nameReplacements[lowerAuthor].name,
+          role: nameReplacements[lowerAuthor].role
+        };
+      }
+      const cleanComments = (p.comments || []).filter(c => !bannedCommenters.some(b => (c.author || '').toLowerCase().includes(b)));
+      return {
+        ...p,
+        author: updatedAuthor,
+        comments: cleanComments
+      };
+    });
+
     try {
       const usersDb = JSON.parse(localStorage.getItem('ph_users_db') || '{}');
       list = list.map(p => {
@@ -434,26 +464,43 @@ export const api = {
 
   // Members
   async getMembers() {
-    let list = getStorage("ph_members", initialMembers);
     try {
       const usersDb = JSON.parse(localStorage.getItem('ph_users_db') || '{}');
-      list = list.map(m => {
-        const mEmail = (m.email || '').toLowerCase().trim();
-        const mName = (m.name || '').toLowerCase().trim();
-        const matchedUser = (mEmail && usersDb[mEmail]) || (mName && usersDb[mName]);
-        if (matchedUser && (matchedUser.avatarImage || matchedUser.profilePicture)) {
-          return {
-            ...m,
-            avatarImage: matchedUser.avatarImage || matchedUser.profilePicture,
-            college: matchedUser.college || m.college,
-            role: matchedUser.role || m.role,
-            skills: matchedUser.skills || m.skills
-          };
-        }
-        return m;
+      const bannedNames = ['alex chen', 'ananya sharma', 'vikram sethi', 'priya sahoo', 'debashis mohapatra'];
+
+      const realMembers = [];
+      const seen = new Set();
+
+      // Collect all real registered users
+      Object.values(usersDb).forEach(u => {
+        if (!u || !u.name) return;
+        const key = (u.email || u.name).toLowerCase().trim();
+        const lowerName = u.name.toLowerCase().trim();
+        if (bannedNames.some(b => lowerName.includes(b))) return;
+        if (seen.has(key)) return;
+        seen.add(key);
+
+        realMembers.push({
+          id: u.id || 'mem-' + key.replace(/[^a-z0-9]/g, ''),
+          name: u.name,
+          email: u.email || '',
+          role: u.role || 'Student Builder',
+          college: u.college || 'Engineering College',
+          skills: Array.isArray(u.skills) ? u.skills : (u.skills ? u.skills.split(',').map(s => s.trim()).filter(Boolean) : ['JavaScript', 'React']),
+          avatar: u.avatar || u.name.slice(0, 2).toUpperCase(),
+          avatarImage: u.avatarImage || u.profilePicture || null,
+          bio: u.bio || '',
+          mentor: Boolean(u.mentor),
+          available: true
+        });
       });
-    } catch (e) {}
-    return list;
+
+      // Clean storage of old fake members
+      setStorage("ph_members", realMembers);
+      return realMembers;
+    } catch (e) {
+      return [];
+    }
   },
 
   saveMembers(members) {
@@ -480,7 +527,10 @@ export const api = {
 
   // Messages / Conversations
   getConversations() {
-    return getStorage("ph_conversations", initialConversations);
+    let convs = getStorage("ph_conversations", initialConversations);
+    const banned = ['alex chen', 'ananya sharma', 'priya sahoo'];
+    convs = (convs || []).filter(c => !banned.some(b => c.user?.name?.toLowerCase().includes(b)));
+    return convs;
   },
 
   saveConversations(conversations) {
@@ -489,7 +539,10 @@ export const api = {
 
   // Notifications
   getNotifications() {
-    return getStorage("ph_notifications", initialNotifications);
+    let notifs = getStorage("ph_notifications", initialNotifications);
+    const banned = ['ananya sharma', 'alex chen'];
+    notifs = (notifs || []).filter(n => !banned.some(b => n.description?.toLowerCase().includes(b) || n.fromName?.toLowerCase().includes(b)));
+    return notifs;
   },
 
   saveNotifications(notifications) {

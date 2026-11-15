@@ -100,9 +100,6 @@ export function AuthProvider({ children }) {
       email: email,
       role: "Student Builder",
       college: "VSSUT, Burla",
-      projectsCount: 12,
-      connectionsCount: 86,
-      skillsCount: 24,
       skills: ["JavaScript", "React", "Node.js", "C++"],
       provider: "email",
       // Restore previously saved customizations if they exist!
@@ -128,9 +125,6 @@ export function AuthProvider({ children }) {
       college: customGoogleProfile?.college || "Engineering College",
       avatar: displayName.slice(0, 2).toUpperCase(),
       profilePicture: customGoogleProfile?.picture || null,
-      projectsCount: 0,
-      connectionsCount: 1,
-      skillsCount: 3,
       skills: ["React", "JavaScript", "Python"],
       provider: "google",
       // Restore previously saved profile picture, cover photo, bio if user signed in before
@@ -158,9 +152,6 @@ export function AuthProvider({ children }) {
       email: email,
       role: "Student Innovator",
       college: "VSSUT, Burla",
-      projectsCount: 1,
-      connectionsCount: 5,
-      skillsCount: 4,
       skills: ["JavaScript", "HTML/CSS"],
       provider: "email",
       ...(savedUser || {})

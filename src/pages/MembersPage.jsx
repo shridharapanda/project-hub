@@ -216,8 +216,6 @@ export default function MembersPage() {
       avatar: newMember.name.slice(0, 2).toUpperCase(),
       category: newMember.role.includes('Frontend') ? 'Frontend' : newMember.role.includes('Backend') ? 'Backend' : 'AI / ML',
       skills: newMember.skills.split(',').map(s => s.trim()).filter(Boolean),
-      projectsCount: 1,
-      skillsCount: newMember.skills.split(',').length,
       available: true,
       mentor: false
     };
@@ -291,16 +289,16 @@ export default function MembersPage() {
 
         <div className="hero-stats">
           <div className="hero-stat">
-            <strong>640+</strong>
-            <span>Members</span>
+            <strong>{members.length}</strong>
+            <span>Active Builders</span>
           </div>
           <div className="hero-stat">
-            <strong>24</strong>
-            <span>Universities</span>
+            <strong>{new Set(members.map(m => m.college).filter(Boolean)).size || 1}</strong>
+            <span>Colleges</span>
           </div>
           <div className="hero-stat">
-            <strong>18</strong>
-            <span>Skill areas</span>
+            <strong>{new Set(members.flatMap(m => m.skills || [])).size || 6}</strong>
+            <span>Skill Areas</span>
           </div>
         </div>
       </section>
@@ -360,10 +358,14 @@ export default function MembersPage() {
           </p>
         ) : filteredMembers.length === 0 ? (
           <div className="empty-state" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '50px 20px' }}>
-            <strong>No members found</strong>
-            <p style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>
-              Try another skill or availability filter.
+            <span style={{ fontSize: '32px' }}>👥</span>
+            <h3 style={{ margin: '12px 0 6px', fontSize: '18px' }}>No registered members yet</h3>
+            <p style={{ color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto 20px', fontSize: '14px' }}>
+              Be the first to join the student network! Register or invite your classmates and project partners to collaborate.
             </p>
+            <Link to="/register" className="primary-btn" style={{ display: 'inline-flex', padding: '10px 20px', textDecoration: 'none' }}>
+              Create Your Profile
+            </Link>
           </div>
         ) : (
           filteredMembers.map(member => {
@@ -408,18 +410,14 @@ export default function MembersPage() {
                   ))}
                 </div>
 
-                <div className="member-stats">
+                <div className="member-stats" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
                   <div>
-                    <strong>{member.projectsCount || 4}</strong>
-                    <span>Projects</span>
-                  </div>
-                  <div>
-                    <strong>{member.skills?.length || 6}</strong>
+                    <strong>{member.skills?.length || 0}</strong>
                     <span>Skills</span>
                   </div>
                   <div>
-                    <strong>{member.mentor ? 'Mentor' : member.available ? 'Open' : 'Busy'}</strong>
-                    <span>{member.mentor ? 'Status' : 'Availability'}</span>
+                    <strong>{member.mentor ? 'Mentor' : 'Builder'}</strong>
+                    <span>Status</span>
                   </div>
                 </div>
 

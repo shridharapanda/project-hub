@@ -44,9 +44,9 @@ export const featuredColleges = [
         skills: ['IoT', 'ESP32', 'React', 'MQTT'],
         tags: ['VSSUT', 'IoT', 'Hardware'],
         author: {
-          name: 'Priya Sahoo',
+          name: 'VSSUT IoT & Smart Systems Lab',
           college: 'VSSUT, Burla',
-          course: 'Electrical Engg'
+          course: 'Embedded Systems & IoT'
         }
       }
     ],
@@ -127,9 +127,9 @@ export const featuredColleges = [
         skills: ['Go', 'Wireshark', 'Linux', 'eBPF'],
         tags: ['Cybersecurity', 'Linux', 'IIT Bhubaneswar'],
         author: {
-          name: 'Debashis Mohapatra',
+          name: 'IIT BBS Cybersecurity Lab',
           college: 'IIT Bhubaneswar',
-          course: 'Cybersecurity Analyst'
+          course: 'Network Security Research'
         }
       }
     ],
@@ -210,9 +210,9 @@ export const featuredColleges = [
         skills: ['Drones', 'AI', 'PyTorch', 'PX4'],
         tags: ['Drones', 'AI', 'NIT Rourkela'],
         author: {
-          name: 'Subham Mohanty',
+          name: 'NIT Rourkela Drone & AI Lab',
           college: 'NIT Rourkela',
-          course: 'Automation Engg'
+          course: 'Robotics & Automation'
         }
       }
     ],
@@ -293,9 +293,9 @@ export const featuredColleges = [
         skills: ['Blockchain', 'SmartGrids', 'Solidity', 'React'],
         tags: ['CleanTech', 'Web', 'BITS Pilani'],
         author: {
-          name: 'Rohan Kulkarni',
+          name: 'BITS CleanTech Research Group',
           college: 'BITS Pilani',
-          course: 'Computer Science & Electrical'
+          course: 'Clean Energy & Smart Grids'
         }
       }
     ],

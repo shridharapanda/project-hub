@@ -16,21 +16,18 @@ export const initialProjects = [
     tags: ["Aerospace", "CanSat", "C++", "Telemetry", "Avionics", "VSSUT"],
     likes: 84,
     liked: false,
-    comments: [
-      { id: 1, author: "Shridhara Panda", text: "Proud to see VSLV representing VSSUT Burla across the nation! 🚀", time: "3h ago" },
-      { id: 2, author: "Alex Chen", text: "Telemetry link works flawlessly on 433MHz LoRa.", time: "1h ago" }
-    ],
+    comments: [],
     status: "ISRO Backed",
     neededRoles: ["Avionics Engineer", "Payload Telemetry Dev"]
   },
   {
     id: "proj-1",
     author: {
-      name: "Shridhara Panda",
-      role: "Full-Stack Developer",
+      name: "Campus AI & Vision Lab",
+      role: "Computer Vision & AI Researchers",
       college: "VSSUT, Burla",
       avatarColor: "purple",
-      initials: "SP"
+      initials: "AI"
     },
     category: "ai",
     badge: "AI / ML",
@@ -39,21 +36,18 @@ export const initialProjects = [
     tags: ["Python", "OpenCV", "Flask", "React", "MongoDB", "VSSUT"],
     likes: 34,
     liked: false,
-    comments: [
-      { id: 1, author: "Rahul Das", text: "Impressive! Are you using ArcFace or FaceNet?", time: "2h ago" },
-      { id: 2, author: "Ananya Sharma", text: "Would love to contribute to the frontend dashboard!", time: "1h ago" }
-    ],
+    comments: [],
     status: "Active Recruitment",
     neededRoles: ["UI/UX Designer", "DevOps Engineer"]
   },
   {
     id: "proj-2",
     author: {
-      name: "Priya Sahoo",
-      role: "IoT Enthusiast",
+      name: "VSSUT IoT & Smart Systems Lab",
+      role: "IoT & Embedded Engineers",
       college: "VSSUT, Burla",
       avatarColor: "cyan",
-      initials: "PS"
+      initials: "SL"
     },
     category: "iot",
     badge: "IoT & Smart Systems",
@@ -62,20 +56,18 @@ export const initialProjects = [
     tags: ["ESP32", "C++", "MQTT", "Node.js", "TailwindCSS", "VSSUT"],
     likes: 27,
     liked: false,
-    comments: [
-      { id: 1, author: "Shridhara Panda", text: "Great hardware integration. What current sensor did you use?", time: "5h ago" }
-    ],
+    comments: [],
     status: "Prototype Ready",
     neededRoles: ["Embedded C Developer", "Mobile App Dev"]
   },
   {
     id: "proj-3",
     author: {
-      name: "Alex Chen",
-      role: "Backend Specialist",
+      name: "Campus Open Source Collective",
+      role: "Full-Stack Web Devs",
       college: "VSSUT, Burla",
       avatarColor: "orange",
-      initials: "AC"
+      initials: "OS"
     },
     category: "web",
     badge: "Web Platform",
@@ -83,21 +75,19 @@ export const initialProjects = [
     description: "Decentralized campus trade platform allowing students to exchange academic notes, textbook rentals, and hardware lab equipment safely.",
     tags: ["Next.js", "Express", "PostgreSQL", "Prisma", "Docker"],
     likes: 42,
-    liked: true,
-    comments: [
-      { id: 1, author: "Neha Verma", text: "Super useful for semester exams!", time: "1d ago" }
-    ],
+    liked: false,
+    comments: [],
     status: "Beta Launch",
     neededRoles: ["Frontend Developer"]
   },
   {
     id: "proj-4",
     author: {
-      name: "Debashis Mohapatra",
-      role: "Cybersecurity Analyst",
+      name: "IIT BBS Cybersecurity Lab",
+      role: "Network & Security Researchers",
       college: "IIT Bhubaneswar",
       avatarColor: "purple",
-      initials: "DM"
+      initials: "CS"
     },
     category: "hardware",
     badge: "Cybersecurity",
@@ -126,9 +116,7 @@ export const initialProjects = [
     tags: ["Robotics", "ROS2", "ComputerVision", "Python", "IIT Bhubaneswar"],
     likes: 62,
     liked: false,
-    comments: [
-      { id: 1, author: "Debashis Mohapatra", text: "Great acoustic payload testing in deep waters!", time: "4h ago" }
-    ],
+    comments: [],
     status: "Testing Phase",
     neededRoles: ["Acoustic Sensor Dev", "Embedded C++ Eng"]
   },
@@ -148,20 +136,18 @@ export const initialProjects = [
     tags: ["FormulaStudent", "EV", "BMS", "CAD", "NIT Rourkela"],
     likes: 78,
     liked: false,
-    comments: [
-      { id: 1, author: "Shridhara Panda", text: "Awesome torque vectoring algorithm!", time: "2h ago" }
-    ],
+    comments: [],
     status: "Track Ready",
     neededRoles: ["BMS Software Dev", "Suspension Lead"]
   },
   {
     id: "proj-nitr-drone",
     author: {
-      name: "Subham Mohanty",
-      role: "Automation Engineer",
+      name: "NIT Rourkela Drone & AI Lab",
+      role: "Automation & UAV Engineers",
       college: "NIT Rourkela",
       avatarColor: "green",
-      initials: "SM"
+      initials: "DL"
     },
     category: "ai",
     badge: "AI & Agriculture",
@@ -170,9 +156,7 @@ export const initialProjects = [
     tags: ["Drones", "AI", "PyTorch", "PX4", "NIT Rourkela"],
     likes: 45,
     liked: false,
-    comments: [
-      { id: 1, author: "Priya Sahoo", text: "Great solution for localized pest management.", time: "1d ago" }
-    ],
+    comments: [],
     status: "Prototype Ready",
     neededRoles: ["Drone Pilot", "Computer Vision Specialist"]
   },
@@ -192,20 +176,18 @@ export const initialProjects = [
     tags: ["Hyperloop", "MagLev", "LinearInduction", "Simulink", "BITS Pilani"],
     likes: 95,
     liked: false,
-    comments: [
-      { id: 1, author: "Alex Chen", text: "Incredible vacuum seal testing results!", time: "6h ago" }
-    ],
+    comments: [],
     status: "Global Finalist",
     neededRoles: ["Magnetic Levitation Eng", "Telemetry Specialist"]
   },
   {
     id: "proj-bits-grid",
     author: {
-      name: "Rohan Kulkarni",
-      role: "CleanTech Dev",
+      name: "BITS CleanTech Research Group",
+      role: "Smart Grid & Energy Systems",
       college: "BITS Pilani",
       avatarColor: "cyan",
-      initials: "RK"
+      initials: "CG"
     },
     category: "web",
     badge: "CleanTech · Smart Grid",
@@ -214,64 +196,13 @@ export const initialProjects = [
     tags: ["Blockchain", "SmartGrids", "Solidity", "React", "BITS Pilani"],
     likes: 38,
     liked: false,
-    comments: [
-      { id: 1, author: "Debashis Mohapatra", text: "Very solid token economics model.", time: "3d ago" }
-    ],
+    comments: [],
     status: "Sandbox Live",
     neededRoles: ["Solidity Dev", "Frontend Engineer"]
   }
 ];
 
-export const initialMembers = [
-  {
-    id: "mem-1",
-    name: "Shridhara Panda",
-    role: "Full-Stack Developer",
-    college: "VSSUT, Burla",
-    skills: ["React", "Node.js", "MongoDB", "C++", "DSA"],
-    projectsCount: 12,
-    connectionsCount: 86,
-    initials: "SP",
-    avatarColor: "purple",
-    connected: false
-  },
-  {
-    id: "mem-2",
-    name: "Alex Chen",
-    role: "Backend & Systems",
-    college: "VSSUT, Burla",
-    skills: ["Python", "Go", "Docker", "PostgreSQL", "AWS"],
-    projectsCount: 8,
-    connectionsCount: 114,
-    initials: "AC",
-    avatarColor: "orange",
-    connected: true
-  },
-  {
-    id: "mem-3",
-    name: "Ananya Sharma",
-    role: "UI/UX & Product Designer",
-    college: "KIIT, Bhubaneswar",
-    skills: ["Figma", "Design Systems", "Tailwind", "CSS3"],
-    projectsCount: 15,
-    connectionsCount: 95,
-    initials: "AS",
-    avatarColor: "cyan",
-    connected: false
-  },
-  {
-    id: "mem-4",
-    name: "Vikram Sethi",
-    role: "AI / ML Researcher",
-    college: "IIT Kharagpur",
-    skills: ["PyTorch", "NLP", "FastAPI", "Transformers"],
-    projectsCount: 6,
-    connectionsCount: 78,
-    initials: "VS",
-    avatarColor: "purple",
-    connected: false
-  }
-];
+export const initialMembers = [];
 
 export const initialHackathons = [
   {
@@ -315,90 +246,9 @@ export const initialHackathons = [
   }
 ];
 
-export const initialConversations = [
-  {
-    id: "conv-1",
-    user: {
-      id: "u-1",
-      name: "Alex Chen",
-      role: "Backend Specialist",
-      initials: "AC",
-      avatarClass: "orange",
-      online: true
-    },
-    lastMessage: "Hey! Let's connect our Flask API with the React frontend tonight.",
-    time: "10:45 AM",
-    unread: 2,
-    messages: [
-      { id: 1, sender: "them", text: "Hey Shridhara, checked out your facial recognition project!", time: "10:30 AM" },
-      { id: 2, sender: "me", text: "Thanks Alex! We just finished the vector database embedding tests.", time: "10:38 AM" },
-      { id: 3, sender: "them", text: "Hey! Let's connect our Flask API with the React frontend tonight.", time: "10:45 AM" }
-    ]
-  },
-  {
-    id: "conv-2",
-    user: {
-      id: "u-2",
-      name: "Ananya Sharma",
-      role: "UI/UX Designer",
-      initials: "AS",
-      avatarClass: "cyan",
-      online: true
-    },
-    lastMessage: "Sent you the updated Figma prototype for the hackathon card!",
-    time: "Yesterday",
-    unread: 0,
-    messages: [
-      { id: 1, sender: "them", text: "Hi! How do you like the new card elevation colors?", time: "Yesterday" },
-      { id: 2, sender: "them", text: "Sent you the updated Figma prototype for the hackathon card!", time: "Yesterday" }
-    ]
-  },
-  {
-    id: "conv-3",
-    user: {
-      id: "u-3",
-      name: "Priya Sahoo",
-      role: "IoT Engineer",
-      initials: "PS",
-      avatarClass: "purple",
-      online: false
-    },
-    lastMessage: "The sensor arrived! I'll test the MQTT broker cutoff.",
-    time: "Nov 5",
-    unread: 0,
-    messages: [
-      { id: 1, sender: "them", text: "The sensor arrived! I'll test the MQTT broker cutoff.", time: "Nov 5" }
-    ]
-  }
-];
+export const initialConversations = [];
 
-export const initialNotifications = [
-  {
-    id: "notif-1",
-    icon: "fa-user-plus",
-    title: "Connection Request",
-    description: "Ananya Sharma wants to connect with you.",
-    time: "10m ago",
-    read: false,
-    action: "connect"
-  },
-  {
-    id: "notif-2",
-    icon: "fa-heart",
-    title: "Project Liked",
-    description: "Alex Chen and 3 others liked your Facial Recognition project.",
-    time: "1h ago",
-    read: false
-  },
-  {
-    id: "notif-3",
-    icon: "fa-calendar-check",
-    title: "Hackathon Reminder",
-    description: "Team registrations for InnovateX close in 3 days.",
-    time: "4h ago",
-    read: true
-  }
-];
+export const initialNotifications = [];
 
 export const sponsoredProjects = [
   {

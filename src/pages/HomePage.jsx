@@ -349,23 +349,8 @@ export default function HomePage({ searchQuery = '' }) {
             <p className="college">{user?.college || 'Engineering College'}</p>
             <p className="course">{user?.course || user?.role || 'Student Builder'}</p>
 
-            <div className="stats">
-              <div>
-                <strong className="counter">{user?.projectsCount || 0}</strong>
-                <span>Projects</span>
-              </div>
-              <div>
-                <strong className="counter">{user?.connectionsCount || 0}</strong>
-                <span>Connections</span>
-              </div>
-              <div>
-                <strong className="counter">{user?.skills?.length || 0}</strong>
-                <span>Skills</span>
-              </div>
-            </div>
-
             {user?.skills && user.skills.length > 0 && (
-              <div className="skills">
+              <div className="skills" style={{ marginTop: '16px', marginBottom: '16px' }}>
                 {user.skills.map((skill, idx) => (
                   <span key={idx}>{skill}</span>
                 ))}
