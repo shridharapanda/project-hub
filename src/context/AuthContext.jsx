@@ -113,17 +113,22 @@ export function AuthProvider({ children }) {
   };
 
   const loginWithGoogle = async (customGoogleProfile = null) => {
-    const email = customGoogleProfile?.email || "student@example.com";
+    const email = customGoogleProfile?.email || "student.innovator@gmail.com";
     const displayName = customGoogleProfile?.name || email.split('@')[0].replace('.', ' ');
     const emailKey = email.toLowerCase().trim();
     const savedUser = getUsersDb()[emailKey];
+
+    const words = displayName.trim().split(/\s+/).filter(Boolean);
+    const computedAvatar = words.length >= 2
+      ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
+      : displayName.slice(0, 2).toUpperCase();
 
     const googleUser = {
       name: displayName,
       email: email,
       role: customGoogleProfile?.role || "Student Builder",
-      college: customGoogleProfile?.college || "Engineering College",
-      avatar: displayName.slice(0, 2).toUpperCase(),
+      college: customGoogleProfile?.college || "Engineering Student",
+      avatar: customGoogleProfile?.avatar || computedAvatar,
       profilePicture: customGoogleProfile?.picture || null,
       skills: ["React", "JavaScript", "Python"],
       provider: "google",

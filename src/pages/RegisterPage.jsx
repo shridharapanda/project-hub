@@ -62,10 +62,9 @@ export default function RegisterPage() {
     try {
       await loginWithGoogle(googleAccount);
       setMessage({ text: `Signed up via Google as ${googleAccount.name}! Redirecting...`, type: 'success' });
-      setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 500);
+      navigate('/', { replace: true });
     } catch (err) {
+      console.error('Google sign-up error:', err);
       setMessage({ text: 'Google signup failed. Please try again.', type: 'error' });
     } finally {
       setLoading(false);

@@ -55,10 +55,10 @@ export default function LoginPage() {
     try {
       await loginWithGoogle(googleAccount);
       setMessage({ text: `Signed in as ${googleAccount.name}! Redirecting...`, type: 'success' });
-      setTimeout(() => {
-        navigate(from, { replace: true });
-      }, 500);
+      const target = (from && from !== '/login') ? from : '/';
+      navigate(target, { replace: true });
     } catch (err) {
+      console.error('Google sign-in error:', err);
       setMessage({ text: 'Google sign-in failed. Please try again.', type: 'error' });
     } finally {
       setLoading(false);
