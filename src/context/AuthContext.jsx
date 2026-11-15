@@ -92,16 +92,23 @@ export function AuthProvider({ children }) {
     const res = await api.login(email, password);
     setToken(res.token);
 
-    const emailKey = email.toLowerCase().trim();
+    const emailKey = (res.user?.email || email).toLowerCase().trim();
     const savedUser = getUsersDb()[emailKey];
+    const displayName = res.user?.name || email.split('@')[0];
+
+    const words = displayName.trim().split(/\s+/).filter(Boolean);
+    const computedAvatar = words.length >= 2
+      ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
+      : displayName.slice(0, 2).toUpperCase();
 
     const loggedUser = {
-      name: res.user?.name || email.split('@')[0],
-      email: email,
+      name: displayName,
+      email: res.user?.email || email,
       role: "Student Builder",
-      college: "VSSUT, Burla",
-      skills: ["JavaScript", "React", "Node.js", "C++"],
-      provider: "email",
+      college: savedUser?.college || "Engineering Student",
+      skills: ["JavaScript", "React", "Node.js", "Python"],
+      provider: emailKey.includes("gmail") ? "gmail" : "email",
+      avatar: computedAvatar,
       // Restore previously saved customizations if they exist!
       ...(savedUser || {})
     };
@@ -145,20 +152,26 @@ export function AuthProvider({ children }) {
     return { token: googleToken, user: googleUser };
   };
 
-  const register = async (name, email, password) => {
+  const register = async (name, email, password, college = "Engineering Student") => {
     const res = await api.register(name, email, password);
     setToken(res.token);
 
     const emailKey = email.toLowerCase().trim();
     const savedUser = getUsersDb()[emailKey];
 
+    const words = name.trim().split(/\s+/).filter(Boolean);
+    const computedAvatar = words.length >= 2
+      ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
+      : name.slice(0, 2).toUpperCase();
+
     const newUser = {
       name: name,
       email: email,
       role: "Student Innovator",
-      college: "VSSUT, Burla",
-      skills: ["JavaScript", "HTML/CSS"],
-      provider: "email",
+      college: college || "Engineering Student",
+      skills: ["JavaScript", "HTML/CSS", "Python"],
+      provider: emailKey.includes("gmail") ? "gmail" : "email",
+      avatar: computedAvatar,
       ...(savedUser || {})
     };
 

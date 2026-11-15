@@ -21,7 +21,7 @@ function AppLayout() {
   const location = useLocation();
 
   // Pages that don't need the standard top navbar
-  const hideNavbar = ['/messages', '/login', '/register'].includes(location.pathname);
+  const hideNavbar = ['/messages', '/login', '/register', '/'].includes(location.pathname);
 
   return (
     <>
@@ -34,15 +34,12 @@ function AppLayout() {
       )}
 
       <Routes>
-        {/* Protected routes - visitors must sign in before entering */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <HomePage searchQuery={searchQuery} />
-            </ProtectedRoute>
-          }
-        />
+        {/* Entry route: Always show Login page first on root and /login */}
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+
+        {/* Authenticated routes */}
         <Route
           path="/home"
           element={
@@ -89,7 +86,7 @@ function AppLayout() {
         <Route path="/register" element={<RegisterPage />} />
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </>
   );

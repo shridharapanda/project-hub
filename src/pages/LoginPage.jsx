@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -11,25 +11,28 @@ export default function LoginPage() {
   const [message, setMessage] = useState({ text: '', type: '' });
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
-  const { login, loginWithGoogle, isAuthenticated } = useAuth();
+  const { login, loginWithGoogle, user, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = (location.state?.from?.pathname && location.state.from.pathname !== '/login')
+  const from = (location.state?.from?.pathname && location.state.from.pathname !== '/login' && location.state.from.pathname !== '/')
     ? location.state.from.pathname
-    : '/';
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/', { replace: true });
-    }
-  }, [isAuthenticated, navigate]);
+    : '/home';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      setMessage({ text: 'Please fill in all fields.', type: 'error' });
+    let cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      setMessage({ text: 'Please enter your Gmail address.', type: 'error' });
+      return;
+    }
+    if (!cleanEmail.includes('@')) {
+      cleanEmail = `${cleanEmail}@gmail.com`;
+    }
+
+    if (!password || password.length < 4) {
+      setMessage({ text: 'Password must be at least 4 characters.', type: 'error' });
       return;
     }
 
@@ -37,26 +40,26 @@ export default function LoginPage() {
     setMessage({ text: '', type: '' });
 
     try {
-      await login(email, password);
-      setMessage({ text: 'Login successful! Redirecting...', type: 'success' });
+      const res = await login(cleanEmail, password);
+      setMessage({ text: `Signed in as ${res.user?.name || cleanEmail}! Redirecting...`, type: 'success' });
       setTimeout(() => {
         navigate(from, { replace: true });
-      }, 500);
+      }, 350);
     } catch (err) {
-      setMessage({ text: err.message || 'Login failed. Please try again.', type: 'error' });
+      setMessage({ text: err.message || 'Login failed. Please verify your Gmail and password.', type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-
   const handleGoogleAccountSelected = async (googleAccount) => {
     setLoading(true);
     try {
       await loginWithGoogle(googleAccount);
-      setMessage({ text: `Signed in as ${googleAccount.name}! Redirecting...`, type: 'success' });
-      const target = (from && from !== '/login') ? from : '/';
-      navigate(target, { replace: true });
+      setMessage({ text: `Signed in via Google as ${googleAccount.name}! Redirecting...`, type: 'success' });
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 350);
     } catch (err) {
       console.error('Google sign-in error:', err);
       setMessage({ text: 'Google sign-in failed. Please try again.', type: 'error' });
@@ -91,15 +94,15 @@ export default function LoginPage() {
 
       <div className="login-card" style={{
         width: '100%',
-        maxWidth: '420px',
-        padding: '38px 32px',
-        borderRadius: '20px',
-        background: 'var(--card-bg)',
-        border: '1px solid var(--border-color)',
-        boxShadow: '0 20px 45px -10px rgba(15, 23, 42, 0.08)'
+        maxWidth: '430px',
+        padding: '36px 30px',
+        borderRadius: '22px',
+        background: 'var(--card-bg, #ffffff)',
+        border: '1px solid var(--border-color, #e2e8f0)',
+        boxShadow: '0 20px 45px -10px rgba(15, 23, 42, 0.1)'
       }}>
         <div className="logo" style={{
-          marginBottom: '18px',
+          marginBottom: '16px',
           color: 'var(--primary, #4f46e5)',
           fontSize: '26px',
           fontWeight: 850,
@@ -112,11 +115,11 @@ export default function LoginPage() {
         <h1 style={{
           marginBottom: '6px',
           textAlign: 'center',
-          fontSize: '24px',
+          fontSize: '23px',
           fontWeight: 800,
           color: 'var(--text-color, #0f172a)'
         }}>
-          Welcome back
+          Sign in to ProjectHub
         </h1>
 
         <p className="subtitle" style={{
@@ -126,8 +129,58 @@ export default function LoginPage() {
           fontSize: '13px',
           lineHeight: 1.6
         }}>
-          Enter your details or continue with your Google account.
+          Give your Gmail ID & password or continue with Google.
         </p>
+
+        {/* If user is already authenticated on this device, show quick continue banner */}
+        {isAuthenticated && user && (
+          <div style={{
+            marginBottom: '20px',
+            padding: '12px 14px',
+            borderRadius: '12px',
+            background: 'var(--surface-subtle, #f8f9fa)',
+            border: '1px solid var(--border-color, #e2e8f0)',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '13px', color: 'var(--text-color, #0f172a)', marginBottom: '8px' }}>
+              Currently signed in as <strong>{user.name}</strong> ({user.email})
+            </div>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={() => navigate('/home')}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  background: '#4f46e5',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Go to Home Feed →
+              </button>
+              <button
+                type="button"
+                onClick={logout}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  background: 'transparent',
+                  border: '1px solid var(--border-color, #e2e8f0)',
+                  color: 'var(--text-secondary, #64748b)',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ================= CONTINUE WITH GOOGLE BUTTON ================= */}
         <button
@@ -137,20 +190,20 @@ export default function LoginPage() {
           disabled={loading}
           style={{
             width: '100%',
-            padding: '11px 16px',
+            padding: '12px 16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '12px',
-            border: '1px solid var(--border-color)',
-            borderRadius: '10px',
-            background: 'var(--card-bg)',
-            color: 'var(--text-color)',
+            border: '1px solid var(--border-color, #e2e8f0)',
+            borderRadius: '12px',
+            background: 'var(--card-bg, #ffffff)',
+            color: 'var(--text-color, #0f172a)',
             fontSize: '14px',
             fontWeight: 600,
             cursor: loading ? 'not-allowed' : 'pointer',
             transition: 'all 0.2s ease',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.04)'
+            boxShadow: '0 2px 5px rgba(0, 0, 0, 0.05)'
           }}
         >
           {/* Google SVG Logo */}
@@ -174,7 +227,7 @@ export default function LoginPage() {
           letterSpacing: '0.06em'
         }}>
           <span style={{ flex: 1, borderBottom: '1px solid var(--border-color, #e2e8f0)' }}></span>
-          <span style={{ padding: '0 10px' }}>or with email</span>
+          <span style={{ padding: '0 10px' }}>or with gmail id</span>
           <span style={{ flex: 1, borderBottom: '1px solid var(--border-color, #e2e8f0)' }}></span>
         </div>
 
@@ -186,24 +239,25 @@ export default function LoginPage() {
             fontSize: '13px',
             fontWeight: 600
           }}>
-            Email address
+            Gmail ID / Email
           </label>
           <input
             id="email"
-            type="email"
+            type="text"
             required
             autoComplete="email"
-            placeholder="student@vssut.ac.in"
+            placeholder="e.g. yourname@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             style={{
               width: '100%',
               padding: '12px 14px',
-              border: '1px solid var(--border-color)',
+              border: '1px solid var(--border-color, #cbd5e1)',
               borderRadius: '10px',
-              background: 'var(--input-bg)',
-              color: 'var(--text-color)',
-              fontSize: '14px'
+              background: 'var(--input-bg, #ffffff)',
+              color: 'var(--text-color, #0f172a)',
+              fontSize: '14px',
+              boxSizing: 'border-box'
             }}
           />
 
@@ -221,17 +275,18 @@ export default function LoginPage() {
             type="password"
             required
             autoComplete="current-password"
-            placeholder="••••••••"
+            placeholder="Enter password (min 4 characters)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={{
               width: '100%',
               padding: '12px 14px',
-              border: '1px solid var(--border-color)',
+              border: '1px solid var(--border-color, #cbd5e1)',
               borderRadius: '10px',
-              background: 'var(--input-bg)',
-              color: 'var(--text-color)',
-              fontSize: '14px'
+              background: 'var(--input-bg, #ffffff)',
+              color: 'var(--text-color, #0f172a)',
+              fontSize: '14px',
+              boxSizing: 'border-box'
             }}
           />
 
@@ -251,9 +306,8 @@ export default function LoginPage() {
               cursor: loading ? 'not-allowed' : 'pointer'
             }}
           >
-            {loading ? 'Signing in...' : 'Log In'}
+            {loading ? 'Signing in...' : 'Sign In with Gmail →'}
           </button>
-
 
           {message.text && (
             <p style={{
@@ -274,7 +328,7 @@ export default function LoginPage() {
           }}>
             Don't have an account?{' '}
             <Link to="/register" style={{ color: 'var(--primary, #4f46e5)', fontWeight: 600, textDecoration: 'none' }}>
-              Register here
+              Register with Gmail
             </Link>
           </div>
         </form>

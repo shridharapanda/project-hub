@@ -46,29 +46,42 @@ export const api = {
     }
 
     // Local authentication fallback
+    let cleanEmail = (email || '').trim().toLowerCase();
+    if (cleanEmail && !cleanEmail.includes('@')) {
+      cleanEmail = `${cleanEmail}@gmail.com`;
+    }
+
     const registered = getStorage("ph_registered_users", []);
-    const match = registered.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    const match = registered.find(u => u.email?.toLowerCase() === cleanEmail);
 
     if (match && match.password === password) {
       return {
         success: true,
-        token: "ph_token_" + btoa(email),
+        token: "ph_token_" + btoa(cleanEmail),
         user: { name: match.name, email: match.email }
       };
     }
 
-    // Default student demo credentials or any valid email
-    if (email.includes("@") && password.length >= 4) {
-      const name = email.split("@")[0].replace(".", " ");
-      const capitalized = name.charAt(0).toUpperCase() + name.slice(1);
+    // Gmail ID or email with at least 4 characters password
+    if (cleanEmail.includes("@") && password.length >= 4) {
+      const username = cleanEmail.split("@")[0].replace(/[._\-+]/g, " ").trim();
+      const capitalized = username
+        .split(/\s+/)
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(" ");
+
       return {
         success: true,
-        token: "ph_token_demo_" + Date.now(),
-        user: { name: capitalized, email }
+        token: "ph_token_gmail_" + Date.now(),
+        user: {
+          name: capitalized || "Student Builder",
+          email: cleanEmail,
+          provider: cleanEmail.includes("gmail") ? "gmail" : "email"
+        }
       };
     }
 
-    throw new Error("Invalid email or password (min 4 characters required).");
+    throw new Error("Invalid Gmail / password (minimum 4 characters required).");
   },
 
   async register(name, email, password) {

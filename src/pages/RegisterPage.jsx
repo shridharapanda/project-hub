@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -7,27 +7,27 @@ import GoogleAuthModal from '../components/GoogleAuthModal';
 export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [college, setCollege] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
-  const { register, loginWithGoogle, isAuthenticated } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/', { replace: true });
-    }
-  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !email || !password || !confirmPassword) {
-      setMessage({ text: 'Please fill in all fields.', type: 'error' });
+      setMessage({ text: 'Please fill in all required fields.', type: 'error' });
       return;
+    }
+
+    let cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail.includes('@')) {
+      cleanEmail = `${cleanEmail}@gmail.com`;
     }
 
     if (password !== confirmPassword) {
@@ -35,8 +35,8 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 6) {
-      setMessage({ text: 'Password must be at least 6 characters.', type: 'error' });
+    if (password.length < 4) {
+      setMessage({ text: 'Password must be at least 4 characters.', type: 'error' });
       return;
     }
 
@@ -44,11 +44,11 @@ export default function RegisterPage() {
     setMessage({ text: '', type: '' });
 
     try {
-      await register(name, email, password);
-      setMessage({ text: 'Account created! Redirecting to home...', type: 'success' });
+      await register(name.trim(), cleanEmail, password, college.trim() || 'Engineering Student');
+      setMessage({ text: 'Account created! Redirecting to home feed...', type: 'success' });
       setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 500);
+        navigate('/home', { replace: true });
+      }, 350);
     } catch (err) {
       setMessage({ text: err.message || 'Registration failed. Try again.', type: 'error' });
     } finally {
@@ -56,13 +56,14 @@ export default function RegisterPage() {
     }
   };
 
-
   const handleGoogleAccountSelected = async (googleAccount) => {
     setLoading(true);
     try {
       await loginWithGoogle(googleAccount);
       setMessage({ text: `Signed up via Google as ${googleAccount.name}! Redirecting...`, type: 'success' });
-      navigate('/', { replace: true });
+      setTimeout(() => {
+        navigate('/home', { replace: true });
+      }, 350);
     } catch (err) {
       console.error('Google sign-up error:', err);
       setMessage({ text: 'Google signup failed. Please try again.', type: 'error' });
@@ -98,14 +99,14 @@ export default function RegisterPage() {
       <div className="login-card" style={{
         width: '100%',
         maxWidth: '440px',
-        padding: '38px 32px',
-        borderRadius: '20px',
-        background: 'var(--card-bg)',
-        border: '1px solid var(--border-color)',
-        boxShadow: '0 20px 45px -10px rgba(15, 23, 42, 0.08)'
+        padding: '36px 30px',
+        borderRadius: '22px',
+        background: 'var(--card-bg, #ffffff)',
+        border: '1px solid var(--border-color, #e2e8f0)',
+        boxShadow: '0 20px 45px -10px rgba(15, 23, 42, 0.1)'
       }}>
         <div className="logo" style={{
-          marginBottom: '18px',
+          marginBottom: '16px',
           color: 'var(--primary, #4f46e5)',
           fontSize: '26px',
           fontWeight: 850,
@@ -118,11 +119,11 @@ export default function RegisterPage() {
         <h1 style={{
           marginBottom: '6px',
           textAlign: 'center',
-          fontSize: '24px',
+          fontSize: '23px',
           fontWeight: 800,
           color: 'var(--text-color, #0f172a)'
         }}>
-          Join ProjectHub
+          Create Student Account
         </h1>
 
         <p className="subtitle" style={{
@@ -132,7 +133,7 @@ export default function RegisterPage() {
           fontSize: '13px',
           lineHeight: 1.6
         }}>
-          Discover projects, find teammates, and build together.
+          Join Student Project Hub with your Gmail account.
         </p>
 
         {/* ================= CONTINUE WITH GOOGLE BUTTON ================= */}
@@ -143,20 +144,20 @@ export default function RegisterPage() {
           disabled={loading}
           style={{
             width: '100%',
-            padding: '11px 16px',
+            padding: '12px 16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '12px',
-            border: '1px solid var(--border-color)',
-            borderRadius: '10px',
-            background: 'var(--card-bg)',
-            color: 'var(--text-color)',
+            border: '1px solid var(--border-color, #e2e8f0)',
+            borderRadius: '12px',
+            background: 'var(--card-bg, #ffffff)',
+            color: 'var(--text-color, #0f172a)',
             fontSize: '14px',
             fontWeight: 600,
             cursor: loading ? 'not-allowed' : 'pointer',
             transition: 'all 0.2s ease',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.04)'
+            boxShadow: '0 2px 5px rgba(0, 0, 0, 0.05)'
           }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24">
@@ -179,7 +180,7 @@ export default function RegisterPage() {
           letterSpacing: '0.06em'
         }}>
           <span style={{ flex: 1, borderBottom: '1px solid var(--border-color, #e2e8f0)' }}></span>
-          <span style={{ padding: '0 10px' }}>or with email</span>
+          <span style={{ padding: '0 10px' }}>or register with gmail</span>
           <span style={{ flex: 1, borderBottom: '1px solid var(--border-color, #e2e8f0)' }}></span>
         </div>
 
@@ -191,7 +192,7 @@ export default function RegisterPage() {
             fontSize: '13px',
             fontWeight: 600
           }}>
-            Full name
+            Full Name *
           </label>
           <input
             id="regName"
@@ -203,11 +204,12 @@ export default function RegisterPage() {
             style={{
               width: '100%',
               padding: '11px 14px',
-              border: '1px solid var(--border-color)',
+              border: '1px solid var(--border-color, #cbd5e1)',
               borderRadius: '10px',
-              background: 'var(--input-bg)',
-              color: 'var(--text-color)',
-              fontSize: '14px'
+              background: 'var(--input-bg, #ffffff)',
+              color: 'var(--text-color, #0f172a)',
+              fontSize: '14px',
+              boxSizing: 'border-box'
             }}
           />
 
@@ -218,23 +220,51 @@ export default function RegisterPage() {
             fontSize: '13px',
             fontWeight: 600
           }}>
-            Email address
+            Gmail Address *
           </label>
           <input
             id="regEmail"
-            type="email"
+            type="text"
             required
-            placeholder="student@vssut.ac.in"
+            placeholder="e.g. yourname@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             style={{
               width: '100%',
               padding: '11px 14px',
-              border: '1px solid var(--border-color)',
+              border: '1px solid var(--border-color, #cbd5e1)',
               borderRadius: '10px',
-              background: 'var(--input-bg)',
-              color: 'var(--text-color)',
-              fontSize: '14px'
+              background: 'var(--input-bg, #ffffff)',
+              color: 'var(--text-color, #0f172a)',
+              fontSize: '14px',
+              boxSizing: 'border-box'
+            }}
+          />
+
+          <label htmlFor="regCollege" style={{
+            display: 'block',
+            margin: '10px 0 5px',
+            color: 'var(--text-color, #1e293b)',
+            fontSize: '13px',
+            fontWeight: 600
+          }}>
+            College / University
+          </label>
+          <input
+            id="regCollege"
+            type="text"
+            placeholder="e.g. VSSUT, Burla / IIT / NIT"
+            value={college}
+            onChange={(e) => setCollege(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '11px 14px',
+              border: '1px solid var(--border-color, #cbd5e1)',
+              borderRadius: '10px',
+              background: 'var(--input-bg, #ffffff)',
+              color: 'var(--text-color, #0f172a)',
+              fontSize: '14px',
+              boxSizing: 'border-box'
             }}
           />
 
@@ -245,23 +275,24 @@ export default function RegisterPage() {
             fontSize: '13px',
             fontWeight: 600
           }}>
-            Password
+            Password *
           </label>
           <input
             id="regPassword"
             type="password"
             required
-            placeholder="At least 6 characters"
+            placeholder="Min 4 characters"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={{
               width: '100%',
               padding: '11px 14px',
-              border: '1px solid var(--border-color)',
+              border: '1px solid var(--border-color, #cbd5e1)',
               borderRadius: '10px',
-              background: 'var(--input-bg)',
-              color: 'var(--text-color)',
-              fontSize: '14px'
+              background: 'var(--input-bg, #ffffff)',
+              color: 'var(--text-color, #0f172a)',
+              fontSize: '14px',
+              boxSizing: 'border-box'
             }}
           />
 
@@ -272,7 +303,7 @@ export default function RegisterPage() {
             fontSize: '13px',
             fontWeight: 600
           }}>
-            Confirm password
+            Confirm Password *
           </label>
           <input
             id="regConfirmPassword"
@@ -284,11 +315,12 @@ export default function RegisterPage() {
             style={{
               width: '100%',
               padding: '11px 14px',
-              border: '1px solid var(--border-color)',
+              border: '1px solid var(--border-color, #cbd5e1)',
               borderRadius: '10px',
-              background: 'var(--input-bg)',
-              color: 'var(--text-color)',
-              fontSize: '14px'
+              background: 'var(--input-bg, #ffffff)',
+              color: 'var(--text-color, #0f172a)',
+              fontSize: '14px',
+              boxSizing: 'border-box'
             }}
           />
 
@@ -308,9 +340,8 @@ export default function RegisterPage() {
               cursor: loading ? 'not-allowed' : 'pointer'
             }}
           >
-            {loading ? 'Creating account...' : 'Create Account'}
+            {loading ? 'Creating account...' : 'Register with Gmail →'}
           </button>
-
 
           {message.text && (
             <p style={{
@@ -331,7 +362,7 @@ export default function RegisterPage() {
           }}>
             Already have an account?{' '}
             <Link to="/login" style={{ color: 'var(--primary, #4f46e5)', fontWeight: 600, textDecoration: 'none' }}>
-              Log in here
+              Sign in here
             </Link>
           </div>
         </form>

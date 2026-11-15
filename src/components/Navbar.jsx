@@ -74,7 +74,7 @@ export default function Navbar({
   return (
     <>
       <header className="navbar">
-        <NavLink to="/" className="logo">
+        <NavLink to="/home" className="logo">
           Project<span>Hub</span>
         </NavLink>
 
@@ -90,7 +90,7 @@ export default function Navbar({
         </form>
 
         <nav className="nav-links">
-          <NavLink to="/" className={({ isActive }) => (isActive ? 'active' : '')}>
+          <NavLink to="/home" className={({ isActive }) => (isActive ? 'active' : '')}>
             Home
           </NavLink>
           <NavLink to="/projects" className={({ isActive }) => (isActive ? 'active' : '')}>
@@ -235,7 +235,7 @@ export default function Navbar({
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
         <div className="mobile-menu show" id="mobileMenu">
-          <NavLink to="/" onClick={() => setMobileMenuOpen(false)}>
+          <NavLink to="/home" onClick={() => setMobileMenuOpen(false)}>
             Home
           </NavLink>
           <NavLink to="/projects" onClick={() => setMobileMenuOpen(false)}>
