@@ -155,8 +155,12 @@ export function AuthProvider({ children }) {
     return res;
   };
 
-  const register = async (name, phone, password, college = "Engineering Student") => {
-    const res = await api.register(name, phone, password, college);
+  const sendRegistrationOtp = async (phone) => {
+    return await api.sendRegistrationOtp(phone);
+  };
+
+  const register = async (name, phone, otpCode, password, college = "Engineering Student") => {
+    const res = await api.register(name, phone, otpCode, password, college);
     setToken(res.token);
 
     const displayName = res.user?.name || name;
@@ -225,6 +229,7 @@ export function AuthProvider({ children }) {
         login,
         sendPhoneOtp,
         verifyOtpAndResetPassword,
+        sendRegistrationOtp,
         register,
         logout,
         updateProfile

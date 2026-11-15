@@ -4,7 +4,7 @@ import {
   initialHackathons,
   initialConversations,
   initialNotifications
-} from './mockData';
+} from './mockData.js';
 
 const BACKEND_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
   ? "http://localhost:5000"
@@ -196,7 +196,44 @@ export const api = {
     };
   },
 
-  async register(name, phone, password, college) {
+  // Send OTP for new account registration (First checks if number already exists!)
+  async sendRegistrationOtp(phoneNumber) {
+    const cleanDigits = (phoneNumber || '').replace(/\D/g, '');
+    if (!cleanDigits || cleanDigits.length < 10) {
+      throw new Error("Please enter a valid 10-digit mobile phone number.");
+    }
+
+    const targetPhone = cleanDigits.slice(-10);
+    const registered = getRegisteredUsers();
+
+    // Check if phone number already exists in the system
+    const existing = registered.find(u =>
+      u.phone && u.phone.replace(/\D/g, '').endsWith(targetPhone)
+    );
+
+    if (existing) {
+      throw new Error(`Mobile number +91 ${targetPhone} is already registered! Please sign in with your password.`);
+    }
+
+    // Phone does NOT exist: Generate random 6-digit verification OTP
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const otpData = {
+      phone: targetPhone,
+      code: generatedOtp,
+      expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes validity
+    };
+    setStorage("ph_registration_otp", otpData);
+
+    return {
+      success: true,
+      phone: targetPhone,
+      otp: generatedOtp,
+      message: `Verification OTP sent to +91 ${targetPhone}!`
+    };
+  },
+
+  async register(name, phone, otpCode, password, college) {
     const cleanName = (name || '').trim();
     const cleanPhoneDigits = (phone || '').replace(/\D/g, '');
 
@@ -205,30 +242,53 @@ export const api = {
     }
 
     if (!cleanPhoneDigits || cleanPhoneDigits.length < 10) {
-      throw new Error("Please enter a valid 10-digit mobile phone number (used for password OTP verification).");
+      throw new Error("Please enter a valid 10-digit mobile phone number.");
     }
 
     const targetPhone = cleanPhoneDigits.slice(-10);
 
-    if (!password || password.length < 4) {
-      throw new Error("Password must be at least 4 characters.");
-    }
-
     const registered = getRegisteredUsers();
 
-    // Check if phone or name is already registered
-    const existing = registered.find(u =>
-      (u.phone && u.phone.replace(/\D/g, '').endsWith(targetPhone)) ||
-      (u.name && u.name.trim().toLowerCase() === cleanName.toLowerCase())
+    // 1. Check if phone number already exists
+    const existingPhone = registered.find(u =>
+      u.phone && u.phone.replace(/\D/g, '').endsWith(targetPhone)
     );
-
-    if (existing) {
-      if (existing.name.trim().toLowerCase() === cleanName.toLowerCase()) {
-        throw new Error(`An account named "${cleanName}" is already registered. Please log in with your password.`);
-      }
-      throw new Error(`An account is already linked with phone number ${targetPhone}. Please log in or use Forgot Password.`);
+    if (existingPhone) {
+      throw new Error(`Mobile number +91 ${targetPhone} is already registered. Please log in with your password.`);
     }
 
+    // 2. Check if name is already registered
+    const existingName = registered.find(u =>
+      u.name && u.name.trim().toLowerCase() === cleanName.toLowerCase()
+    );
+    if (existingName) {
+      throw new Error(`An account named "${cleanName}" is already registered. Please choose another name or sign in.`);
+    }
+
+    // 3. Verify Phone OTP
+    if (!otpCode || otpCode.trim().length !== 6) {
+      throw new Error("Please enter the 6-digit OTP sent to your mobile number.");
+    }
+
+    const activeOtp = getStorage("ph_registration_otp", null);
+    if (!activeOtp || activeOtp.phone !== targetPhone) {
+      throw new Error("No active OTP request found for +91 " + targetPhone + ". Please click 'Send OTP' first.");
+    }
+
+    if (Date.now() > activeOtp.expiresAt) {
+      throw new Error("The verification OTP has expired. Please click 'Resend OTP'.");
+    }
+
+    if (activeOtp.code !== otpCode.trim()) {
+      throw new Error("Incorrect verification OTP code. Please enter the valid 6-digit code.");
+    }
+
+    // 4. Validate Password
+    if (!password || password.length < 4) {
+      throw new Error("Password must be at least 4 characters long.");
+    }
+
+    // OTP Verified & Validated! Create new user account
     const newUserRecord = {
       name: cleanName,
       phone: targetPhone,
@@ -238,6 +298,11 @@ export const api = {
 
     registered.push(newUserRecord);
     setStorage("ph_registered_users", registered);
+
+    // Clear active registration OTP
+    try {
+      localStorage.removeItem("ph_registration_otp");
+    } catch (e) {}
 
     return {
       success: true,
