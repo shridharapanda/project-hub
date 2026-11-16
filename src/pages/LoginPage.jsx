@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [enteredOtp, setEnteredOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
-  const { login, sendPhoneOtp, verifyOtpAndResetPassword, user, isAuthenticated, logout } = useAuth();
+  const { login, sendPhoneOtp, verifyOtpAndResetPassword } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -182,56 +182,6 @@ export default function LoginPage() {
             ? 'Verify with your registered phone number OTP to reset your password and sign in.'
             : 'Enter your Name and Password to sign in to your account.'}
         </p>
-
-        {/* Active Session Info if already logged in */}
-        {isAuthenticated && user && !showOtpFlow && (
-          <div style={{
-            marginBottom: '18px',
-            padding: '12px 14px',
-            borderRadius: '12px',
-            background: 'var(--surface-subtle, #f8f9fa)',
-            border: '1px solid var(--border-color, #e2e8f0)',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '13px', color: 'var(--text-color, #0f172a)', marginBottom: '8px' }}>
-              Currently signed in as <strong>{user.name}</strong>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-              <button
-                type="button"
-                onClick={() => navigate('/home')}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '8px',
-                  background: '#4f46e5',
-                  color: '#ffffff',
-                  border: 'none',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-              >
-                Go to Home Feed →
-              </button>
-              <button
-                type="button"
-                onClick={logout}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '8px',
-                  background: 'transparent',
-                  border: '1px solid var(--border-color, #e2e8f0)',
-                  color: 'var(--text-secondary, #64748b)',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-              >
-                Sign out
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* ---------------- MODE 1: NAME & PASSWORD LOGIN ---------------- */}
         {!showOtpFlow ? (
